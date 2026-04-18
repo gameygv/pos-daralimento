@@ -27,6 +27,7 @@ export const productFormSchema = z.object({
   product_type: z.enum(PRODUCT_TYPES).default('physical'),
   category_id: z.string().uuid().nullable().default(null),
   base_price: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
+  precio_mayoreo: z.coerce.number().min(0).default(0),
   cost: z.coerce.number().min(0).nullable().default(null),
   tax_rate: z.coerce.number().min(0).max(1).default(0.16),
   description: z.string().max(2000).nullable().default(null),

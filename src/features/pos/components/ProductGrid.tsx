@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Package, QrCode, Plus, Tag, Star } from 'lucide-react';
+import { Search, Package, QrCode, Plus, Tag, Star, Users, UserCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,15 +8,20 @@ import { useCategoryList } from '@/features/catalog/categories';
 import type { PosProduct } from '../hooks/usePosProducts';
 import { QuickProductDialog } from './QuickProductDialog';
 import { QrScannerDialog } from './QrScannerDialog';
+import { formatPrice } from '@/features/catalog/products/schemas/product.schema';
 
 const ALL_VALUE = '__all__';
+
+export type PricingMode = 'publico' | 'mayoreo';
 
 interface ProductGridProps {
   onProductSelect: (product: PosProduct) => void;
   onBarcodeScan: (barcode: string) => void;
+  pricingMode: PricingMode;
+  onPricingModeChange: (mode: PricingMode) => void;
 }
 
-export function ProductGrid({ onProductSelect, onBarcodeScan }: ProductGridProps) {
+export function ProductGrid({ onProductSelect, onBarcodeScan, pricingMode, onPricingModeChange }: ProductGridProps) {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_VALUE);
@@ -48,6 +53,23 @@ export function ProductGrid({ onProductSelect, onBarcodeScan }: ProductGridProps
             className="h-14 rounded-lg border-2 pl-12 text-lg focus:border-teal-500"
           />
         </div>
+        {/* Pricing mode toggle */}
+        <Button
+          variant={pricingMode === 'mayoreo' ? 'default' : 'outline'}
+          className={`h-14 shrink-0 rounded-lg border-2 px-4 text-sm font-medium ${
+            pricingMode === 'mayoreo'
+              ? 'bg-purple-600 text-white hover:bg-purple-700 border-purple-600'
+              : 'hover:bg-purple-50 hover:border-purple-300'
+          }`}
+          onClick={() => onPricingModeChange(pricingMode === 'publico' ? 'mayoreo' : 'publico')}
+          title={pricingMode === 'publico' ? 'Cambiar a Precio Mayoreo' : 'Cambiar a Precio Publico'}
+        >
+          {pricingMode === 'mayoreo' ? (
+            <><Users className="mr-1 h-5 w-5" /> Mayoreo</>
+          ) : (
+            <><UserCheck className="mr-1 h-5 w-5" /> Publico</>
+          )}
+        </Button>
         <Button
           variant="outline"
           size="icon"
@@ -162,10 +184,15 @@ export function ProductGrid({ onProductSelect, onBarcodeScan }: ProductGridProps
                     <Package className="h-16 w-16 text-gray-300" />
                   )}
                 </div>
-                {/* Name bar */}
+                {/* Name + price bar */}
                 <div className="w-full bg-teal-700 px-3 py-2 text-left">
-                  <span className="line-clamp-2 text-sm font-medium leading-tight text-white">
+                  <span className="line-clamp-1 text-sm font-medium leading-tight text-white">
                     {product.name}
+                  </span>
+                  <span className="text-xs text-teal-200">
+                    {pricingMode === 'mayoreo' && product.precio_mayoreo > 0
+                      ? formatPrice(product.precio_mayoreo)
+                      : formatPrice(product.base_price)}
                   </span>
                 </div>
               </button>

@@ -92,7 +92,7 @@ export function AlmacenesPage() {
       is_active: true,
       is_default: false,
     });
-    toast.success('Almacen creado');
+    toast.success('Punto de Venta creado');
     setNewName('');
     setNewDesc('');
     setNewDir('');
@@ -133,18 +133,18 @@ export function AlmacenesPage() {
   }
 
   if (isLoading) {
-    return <div className="flex h-64 items-center justify-center text-muted-foreground">Cargando almacenes...</div>;
+    return <div className="flex h-64 items-center justify-center text-muted-foreground">Cargando puntos de venta...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Almacenes</h1>
+          <h1 className="text-2xl font-bold">Puntos de Venta</h1>
           <p className="text-muted-foreground">Gestiona inventario por ubicacion con trazabilidad Kardex</p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nuevo Almacen
+          <Plus className="mr-2 h-4 w-4" /> Nuevo Punto de Venta
         </Button>
       </div>
 
@@ -222,7 +222,7 @@ export function AlmacenesPage() {
                 </div>
                 {stockData.length === 0 ? (
                   <p className="py-8 text-center text-muted-foreground">
-                    Sin productos en este almacen. Ajusta stock o transfiere productos.
+                    Sin productos en este punto de venta. Ajusta stock o transfiere productos.
                   </p>
                 ) : (
                   <div className="overflow-x-auto rounded-lg border">
@@ -312,7 +312,7 @@ export function AlmacenesPage() {
             {activeTab === 'transferir' && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Almacen destino</Label>
+                  <Label>Punto de Venta destino</Label>
                   <Select value={transferDest} onValueChange={setTransferDest}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona destino" />
@@ -330,7 +330,7 @@ export function AlmacenesPage() {
                 <div className="space-y-2">
                   <Label>Productos a transferir</Label>
                   <p className="text-xs text-muted-foreground">
-                    Selecciona del stock actual de este almacen
+                    Selecciona del stock actual de este punto de venta
                   </p>
                   {stockData.map((s) => {
                     const existing = transferItems.find((i) => i.variantId === s.variant_id);
@@ -374,11 +374,11 @@ export function AlmacenesPage() {
         </Card>
       )}
 
-      {/* Create almacen dialog */}
+      {/* Create punto de venta dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nuevo Almacen</DialogTitle>
+            <DialogTitle>Nuevo Punto de Venta</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>

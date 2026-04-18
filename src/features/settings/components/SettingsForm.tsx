@@ -3,8 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Ticket, Hash, Save, Loader2, ShieldCheck } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { Building2, Ticket, Hash, Save, Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/ImageUpload';
 import type { PvcntlRow } from '../hooks/useSettings';
 import { EMPTY_CONFIG } from '../hooks/useSettings';
@@ -36,7 +35,7 @@ export function SettingsForm({ initialData, saving, onSave }: SettingsFormProps)
         usadmon: initialData.usadmon ?? null,
         usaventa: initialData.usaventa ?? null,
         ultclt: initialData.ultclt ?? null,
-        modo_seguro_t: initialData.modo_seguro_t ?? false,
+        modo_seguro_t: false,
       });
     }
   }, [initialData]);
@@ -69,7 +68,7 @@ export function SettingsForm({ initialData, saving, onSave }: SettingsFormProps)
                 id="empresa"
                 value={config.empresa}
                 onChange={(e) => updateField('empresa', e.target.value)}
-                placeholder="The Elephant Bowl"
+                placeholder="DAR Alimento"
               />
             </div>
             <div className="space-y-2">
@@ -166,28 +165,6 @@ export function SettingsForm({ initialData, saving, onSave }: SettingsFormProps)
         </CardContent>
       </Card>
 
-      {/* Advanced mode toggle — intentionally vague label */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <ShieldCheck className="h-5 w-5 text-primary" /> Avanzado
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div>
-              <p className="font-medium">Modo T</p>
-              <p className="text-sm text-muted-foreground">
-                Habilitar configuracion avanzada de tiendas
-              </p>
-            </div>
-            <Switch
-              checked={config.modo_seguro_t}
-              onCheckedChange={(v) => updateField('modo_seguro_t', v)}
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="flex justify-end">
         <Button type="submit" disabled={saving} className="gap-2 px-8">

@@ -45,7 +45,7 @@ function SetupRequired() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-8">
       <div className="max-w-lg space-y-4 rounded-lg border bg-card p-8 text-card-foreground shadow-lg">
-        <h1 className="text-2xl font-bold">POS The Elephant Bowl</h1>
+        <h1 className="text-2xl font-bold">POS DAR Alimento</h1>
         <p className="text-muted-foreground">
           El sistema necesita conectarse a Supabase para funcionar. Configura las variables de entorno:
         </p>

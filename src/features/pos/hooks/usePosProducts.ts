@@ -10,6 +10,7 @@ export interface PosProduct {
   slug: string;
   product_type: string;
   base_price: number;
+  precio_mayoreo: number;
   tax_rate: number;
   is_active: boolean;
   track_stock: boolean;
@@ -31,6 +32,7 @@ interface RawProductRow {
   slug: string;
   product_type: string;
   base_price: number;
+  precio_mayoreo?: number;
   tax_rate: number;
   is_active: boolean;
   track_stock?: boolean;
@@ -44,7 +46,7 @@ interface RawProductRow {
 export async function findProductByBarcode(barcode: string): Promise<PosProduct | null> {
   const { data, error } = await supabase
     .from('products' as never)
-    .select('id, sku, name, slug, product_type, base_price, tax_rate, is_active, track_stock, image_url, category_id, categories(name), product_variants(stock)' as never)
+    .select('id, sku, name, slug, product_type, base_price, precio_mayoreo, tax_rate, is_active, track_stock, image_url, category_id, categories(name), product_variants(stock)' as never)
     .eq('is_active' as never, true as never)
     .or(`barcode.eq.${barcode},sku.eq.${barcode}` as never)
     .limit(1) as unknown as {
@@ -62,6 +64,7 @@ export async function findProductByBarcode(barcode: string): Promise<PosProduct 
     slug: p.slug,
     product_type: p.product_type,
     base_price: p.base_price,
+    precio_mayoreo: p.precio_mayoreo ?? 0,
     tax_rate: p.tax_rate ?? 0.16,
     is_active: p.is_active,
     track_stock: p.track_stock ?? true,
@@ -78,7 +81,7 @@ export function usePosProducts(params: UsePosProductsParams = {}) {
     queryFn: async () => {
       let query = supabase
         .from('products' as never)
-        .select('id, sku, name, slug, product_type, base_price, tax_rate, is_active, track_stock, image_url, category_id, categories(name), product_variants(stock)' as never)
+        .select('id, sku, name, slug, product_type, base_price, precio_mayoreo, tax_rate, is_active, track_stock, image_url, category_id, categories(name), product_variants(stock)' as never)
         .eq('is_active' as never, true as never)
         .order('name' as never)
         .limit(100);
@@ -107,6 +110,7 @@ export function usePosProducts(params: UsePosProductsParams = {}) {
           slug: p.slug,
           product_type: p.product_type,
           base_price: p.base_price,
+          precio_mayoreo: p.precio_mayoreo ?? 0,
           tax_rate: p.tax_rate ?? 0.16,
           is_active: p.is_active,
           track_stock: p.track_stock ?? true,

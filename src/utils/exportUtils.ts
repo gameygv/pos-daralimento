@@ -92,7 +92,7 @@ export function exportToPDF(
           ).join('')}
         </tbody>
       </table>
-      <p class="footer">Generado: ${new Date().toLocaleString('es-MX')} | POS The Elephant Bowl</p>
+      <p class="footer">Generado: ${new Date().toLocaleString('es-MX')} | POS DAR Alimento</p>
       <script>window.print(); window.close();</script>
     </body>
     </html>

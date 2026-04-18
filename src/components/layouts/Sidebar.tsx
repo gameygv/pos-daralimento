@@ -31,7 +31,7 @@ const menuItems: MenuItem[] = [
   { label: 'Productos',      path: '/productos',     icon: Package, permission: 'productos' },
   { label: 'Categorias',     path: '/categorias',    icon: Tags, permission: 'categorias' },
   { label: 'Inventario',     path: '/inventario',    icon: Warehouse, permission: 'inventario' },
-  { label: 'Almacenes',      path: '/almacenes',     icon: Package, permission: 'almacenes' },
+  { label: 'Puntos de Venta', path: '/almacenes',     icon: Package, permission: 'almacenes' },
   { label: 'Ord. Compra',   path: '/ordenes-compra', icon: Truck, permission: 'inventario' },
   { label: 'Reportes',       path: '/reportes',      icon: BarChart3, permission: 'reportes' },
   { label: 'Corte',          path: '/corte',         icon: Calculator },

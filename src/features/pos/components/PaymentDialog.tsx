@@ -5,6 +5,7 @@ import {
   HandCoins,
   ArrowRightLeft,
   CircleDollarSign,
+  Gift,
   CheckCircle,
   Printer,
   Split,
@@ -43,6 +44,7 @@ const PAYMENT_METHODS: { id: MetodoPago; label: string; icon: React.ReactNode }[
   { id: 'credito', label: 'Credito', icon: <HandCoins className="h-5 w-5" /> },
   { id: 'transferencia', label: 'Transferencia', icon: <ArrowRightLeft className="h-5 w-5" /> },
   { id: 'otros', label: 'Otros', icon: <CircleDollarSign className="h-5 w-5" /> },
+  { id: 'regalo', label: 'Regalo', icon: <Gift className="h-5 w-5" /> },
 ];
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000];
@@ -111,7 +113,7 @@ export function PaymentDialog({
   const splitRemaining = total - splitPaid;
 
   // Can confirm logic
-  const canConfirmSingle = method !== 'efectivo' || received >= total;
+  const canConfirmSingle = method === 'regalo' || method !== 'efectivo' || received >= total;
   const canConfirmSplit = splitRemaining <= 0.01; // allow rounding
 
   function resetState() {
@@ -178,7 +180,7 @@ export function PaymentDialog({
 
     const paymentsForRecord = splitMode
       ? splits
-      : [{ id: '1', method, amount: total }];
+      : [{ id: '1', method, amount: method === 'regalo' ? 0 : total }];
 
     const result = await createSale.mutateAsync({
       items,
@@ -340,7 +342,7 @@ export function PaymentDialog({
                 {/* Payment method selector */}
                 <div>
                   <p className="mb-2 text-sm font-medium text-gray-700">Forma de Pago</p>
-                  <div className="grid grid-cols-5 gap-1">
+                  <div className="grid grid-cols-6 gap-1">
                     {PAYMENT_METHODS.map((pm) => (
                       <button
                         key={pm.id}
@@ -477,7 +479,7 @@ export function PaymentDialog({
                 {splitRemaining > 0.01 && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-gray-700">Agregar Pago</p>
-                    <div className="grid grid-cols-5 gap-1">
+                    <div className="grid grid-cols-6 gap-1">
                       {PAYMENT_METHODS.map((pm) => (
                         <button
                           key={pm.id}
@@ -564,7 +566,7 @@ export function PaymentDialog({
 
               {/* Ticket summary */}
               <div className="rounded-lg border bg-gray-50 p-4 text-left text-sm print-ticket">
-                <p className="text-center font-bold">The Elephant Bowl</p>
+                <p className="text-center font-bold">DAR Alimento</p>
                 <p className="text-center text-xs text-gray-500">
                   {new Date().toLocaleDateString('es-MX')} {new Date().toLocaleTimeString('es-MX')}
                 </p>

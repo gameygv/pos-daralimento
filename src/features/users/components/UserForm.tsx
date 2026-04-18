@@ -114,7 +114,7 @@ export function UserForm({ open, onOpenChange, user, saving, onSave, onChangePas
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="usuario@theelephantbowl.com"
+                  placeholder="usuario@daralimento.com"
                 />
               </div>
 

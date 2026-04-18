@@ -10,7 +10,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { useCreateGasto, useUpdateGasto } from '../hooks/useGastos';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useCreateGasto, useUpdateGasto, useGastoCategorias } from '../hooks/useGastos';
 import type { GastoRow } from '../hooks/useGastos';
 
 interface GastosFormProps {
@@ -23,36 +30,43 @@ export function GastosForm({ open, onOpenChange, gasto }: GastosFormProps) {
   const [fecha, setFecha] = useState('');
   const [concepto, setConcepto] = useState('');
   const [monto, setMonto] = useState('');
-  const [categoria, setCategoria] = useState('');
+  const [categoriaId, setCategoriaId] = useState('');
   const [notas, setNotas] = useState('');
 
+  const { data: categorias = [] } = useGastoCategorias();
   const createGasto = useCreateGasto();
   const updateGasto = useUpdateGasto();
   const isEditing = !!gasto;
+
+  // Build parent/child structure
+  const parents = categorias.filter((c) => !c.parent_id);
+  const children = categorias.filter((c) => !!c.parent_id);
 
   useEffect(() => {
     if (gasto) {
       setFecha(gasto.fecha);
       setConcepto(gasto.concepto);
       setMonto(String(gasto.monto));
-      setCategoria(gasto.categoria ?? '');
+      setCategoriaId(gasto.categoria_id ?? '');
       setNotas(gasto.notas ?? '');
     } else {
       setFecha(new Date().toISOString().split('T')[0]!);
       setConcepto('');
       setMonto('');
-      setCategoria('');
+      setCategoriaId('');
       setNotas('');
     }
   }, [gasto, open]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const selectedCat = categorias.find((c) => c.id === categoriaId);
     const data = {
       fecha,
       concepto,
       monto: parseFloat(monto),
-      categoria: categoria || null,
+      categoria: selectedCat?.nombre ?? null,
+      categoria_id: categoriaId || null,
       notas: notas || null,
       created_by: null,
     };
@@ -111,14 +125,29 @@ export function GastosForm({ open, onOpenChange, gasto }: GastosFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="categoria">Categoría</Label>
-            <Input
-              id="categoria"
-              value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
-              placeholder="Ej: Renta, Servicios, Insumos..."
-              className="h-11"
-            />
+            <Label>Categoría</Label>
+            <Select value={categoriaId} onValueChange={setCategoriaId}>
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Selecciona categoría..." />
+              </SelectTrigger>
+              <SelectContent>
+                {parents.map((parent) => {
+                  const subs = children.filter((c) => c.parent_id === parent.id);
+                  return (
+                    <div key={parent.id}>
+                      <SelectItem value={parent.id} className="font-semibold">
+                        {parent.nombre}
+                      </SelectItem>
+                      {subs.map((sub) => (
+                        <SelectItem key={sub.id} value={sub.id} className="pl-6">
+                          └ {sub.nombre}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="notas">Notas</Label>

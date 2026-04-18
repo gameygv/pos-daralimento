@@ -46,7 +46,7 @@ export function CortePrint({
       <div className="text-center">
         <p className="text-sm font-bold">================================</p>
         <p className="text-sm font-bold">CORTE DE CAJA</p>
-        <p className="text-sm font-bold">The Elephant Bowl</p>
+        <p className="text-sm font-bold">DAR Alimento</p>
         <p className="text-sm font-bold">================================</p>
         <p>Fecha: {fecha}</p>
         <p>Hora: {hora}</p>

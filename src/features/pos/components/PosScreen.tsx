@@ -41,6 +41,7 @@ export function PosScreen() {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showCorteDialog, setShowCorteDialog] = useState(false);
+  const [pricingMode, setPricingMode] = useState<'publico' | 'mayoreo'>('publico');
 
   const { data: activeSession, isLoading: loadingSession } = useMyActiveSession();
   const { data: cajas = [] } = useActiveCajas();
@@ -75,11 +76,15 @@ export function PosScreen() {
   }
 
   function handleProductSelect(product: PosProduct) {
+    const effectivePrice =
+      pricingMode === 'mayoreo' && product.precio_mayoreo > 0
+        ? product.precio_mayoreo
+        : product.base_price;
     addItem({
       id: product.id,
       name: product.name,
       sku: product.sku,
-      base_price: product.base_price,
+      base_price: effectivePrice,
       cost: null,
       tax_rate: product.tax_rate,
       image_url: product.image_url,
@@ -222,7 +227,12 @@ export function PosScreen() {
           className={`flex-1 overflow-hidden ${showMobileCart ? 'hidden sm:flex' : 'flex'}`}
         >
           <div className="flex-1 overflow-hidden p-3">
-            <ProductGrid onProductSelect={handleProductSelect} onBarcodeScan={handleQrScan} />
+            <ProductGrid
+              onProductSelect={handleProductSelect}
+              onBarcodeScan={handleQrScan}
+              pricingMode={pricingMode}
+              onPricingModeChange={setPricingMode}
+            />
           </div>
         </div>
 

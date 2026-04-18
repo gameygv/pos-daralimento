@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getNextCajaFolio } from '@/features/cajas/hooks/useCajas';
 import type { CartItem } from '../types';
 
-export type MetodoPago = 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'otros';
+export type MetodoPago = 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'otros' | 'regalo';
 
 interface SplitPaymentEntry {
   method: MetodoPago;

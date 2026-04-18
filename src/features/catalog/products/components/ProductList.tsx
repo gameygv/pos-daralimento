@@ -218,7 +218,12 @@ export function ProductList() {
                       {product.category_name ?? '—'}
                     </TableCell>
                     <TableCell className="text-right">
-                      {formatPrice(product.base_price)}
+                      <div>{formatPrice(product.base_price)}</div>
+                      {product.precio_mayoreo > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          May: {formatPrice(product.precio_mayoreo)}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       {product.total_stock}

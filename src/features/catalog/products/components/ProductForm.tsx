@@ -50,6 +50,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
       product_type: 'physical',
       category_id: null,
       base_price: 0,
+      precio_mayoreo: 0,
       cost: null,
       tax_rate: 0.16,
       description: null,
@@ -72,6 +73,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
           product_type: (existingProduct as Record<string, unknown>).product_type as ProductFormValues['product_type'],
           category_id: ((existingProduct as Record<string, unknown>).category_id as string | null) ?? null,
           base_price: (existingProduct as Record<string, unknown>).base_price as number,
+          precio_mayoreo: ((existingProduct as Record<string, unknown>).precio_mayoreo as number) ?? 0,
           cost: ((existingProduct as Record<string, unknown>).cost as number | null) ?? null,
           tax_rate: (existingProduct as Record<string, unknown>).tax_rate as number,
           description: ((existingProduct as Record<string, unknown>).description as string | null) ?? null,
@@ -89,6 +91,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
           product_type: 'physical',
           category_id: null,
           base_price: 0,
+          precio_mayoreo: 0,
           cost: null,
           tax_rate: 0.16,
           description: null,
@@ -120,10 +123,15 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
 
   // Margin calculation
   const watchPrice = form.watch('base_price');
+  const watchMayoreo = form.watch('precio_mayoreo');
   const watchCost = form.watch('cost');
   const margin =
     watchPrice > 0 && watchCost !== null && watchCost !== undefined && watchCost >= 0
       ? (((watchPrice - watchCost) / watchPrice) * 100).toFixed(1)
+      : null;
+  const marginMayoreo =
+    watchMayoreo > 0 && watchCost !== null && watchCost !== undefined && watchCost >= 0
+      ? (((watchMayoreo - watchCost) / watchMayoreo) * 100).toFixed(1)
       : null;
 
   async function onSubmit(values: ProductFormValues) {
@@ -238,9 +246,9 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Precios
             </h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="base_price">Precio base</Label>
+                <Label htmlFor="base_price">Precio Publico</Label>
                 <Input
                   id="base_price"
                   type="number"
@@ -251,7 +259,33 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 {form.formState.errors.base_price && (
                   <p className="text-sm text-destructive">{form.formState.errors.base_price.message}</p>
                 )}
+                {margin !== null && (
+                  <p className="text-xs text-muted-foreground">
+                    Margen: <span className="font-medium">{margin}%</span>
+                  </p>
+                )}
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="precio_mayoreo">Precio Mayoreo</Label>
+                <Input
+                  id="precio_mayoreo"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...form.register('precio_mayoreo')}
+                  placeholder="0 = sin precio mayoreo"
+                />
+                {form.formState.errors.precio_mayoreo && (
+                  <p className="text-sm text-destructive">{form.formState.errors.precio_mayoreo.message}</p>
+                )}
+                {marginMayoreo !== null && (
+                  <p className="text-xs text-muted-foreground">
+                    Margen: <span className="font-medium">{marginMayoreo}%</span>
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cost">Costo</Label>
                 <Input
@@ -275,11 +309,6 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 />
               </div>
             </div>
-            {margin !== null && (
-              <p className="text-sm text-muted-foreground">
-                Margen: <span className="font-medium">{margin}%</span>
-              </p>
-            )}
           </div>
 
           <Separator />

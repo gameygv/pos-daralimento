@@ -8,7 +8,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   useUserCajas,
   useActiveSessions,
@@ -40,7 +39,6 @@ export function CajaSelectionModal({ open, onCajaSelected }: CajaSelectionModalP
   const [step, setStep] = useState<Step>('tienda');
   const [selectedTienda, setSelectedTienda] = useState<TiendaRow | null>(null);
   const [selectedCaja, setSelectedCaja] = useState<CajaRow | null>(null);
-  const [montoApertura, setMontoApertura] = useState<string>('0');
 
   // Auto-skip tienda step if only 1 tienda
   const effectiveTiendas = tiendas;
@@ -78,18 +76,12 @@ export function CajaSelectionModal({ open, onCajaSelected }: CajaSelectionModalP
 
   async function handleOpen() {
     if (!selectedCaja || !user) return;
-    const monto = parseFloat(montoApertura) || 0;
-    if (monto < 0) {
-      toast.error('El monto de apertura no puede ser negativo');
-      return;
-    }
-
     try {
       const session = await openCaja.mutateAsync({
         cajaId: selectedCaja.id,
         userId: user.id,
         userName: user.email?.split('@')[0] ?? 'Usuario',
-        montoApertura: monto,
+        montoApertura: 0,
       });
       toast.success(`Caja "${selectedCaja.nombre}" abierta`);
       onCajaSelected(session);
@@ -240,23 +232,6 @@ export function CajaSelectionModal({ open, onCajaSelected }: CajaSelectionModalP
                     );
                   })}
                 </div>
-
-                {selectedCaja && (
-                  <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
-                    <label className="text-sm font-medium">
-                      Monto de Apertura (efectivo en caja)
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={montoApertura}
-                      onChange={(e) => setMontoApertura(e.target.value)}
-                      min={0}
-                      step={0.01}
-                      className="h-12 text-center text-xl font-bold"
-                    />
-                  </div>
-                )}
 
                 <Button
                   className="h-12 w-full bg-teal-600 text-lg font-bold hover:bg-teal-700"

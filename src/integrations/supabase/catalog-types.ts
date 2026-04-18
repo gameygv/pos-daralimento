@@ -62,6 +62,7 @@ export interface CatalogDatabase {
           product_type: ProductType;
           category_id: string | null;
           base_price: number;
+          precio_mayoreo: number;
           cost: number | null;
           tax_rate: number;
           is_active: boolean;
@@ -81,6 +82,7 @@ export interface CatalogDatabase {
           product_type?: ProductType;
           category_id?: string | null;
           base_price: number;
+          precio_mayoreo?: number;
           cost?: number | null;
           tax_rate?: number;
           is_active?: boolean;
@@ -100,6 +102,7 @@ export interface CatalogDatabase {
           product_type?: ProductType;
           category_id?: string | null;
           base_price?: number;
+          precio_mayoreo?: number;
           cost?: number | null;
           tax_rate?: number;
           is_active?: boolean;
@@ -253,6 +256,7 @@ export interface CatalogDatabase {
           slug: string;
           product_type: ProductType;
           base_price: number;
+          precio_mayoreo: number;
           is_active: boolean;
           category_name: string | null;
           variant_count: number;
