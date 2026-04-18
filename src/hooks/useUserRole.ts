@@ -9,6 +9,12 @@ export function useUserRole() {
     queryKey: ['user-role', user?.id],
     queryFn: async () => {
       if (!user) return null;
+
+      // First check auth user_metadata (set at user creation)
+      const metaRole = (user.user_metadata as Record<string, unknown>)?.role as string | undefined;
+      if (metaRole) return metaRole;
+
+      // Fallback: check vende table
       const { data } = (await supabase
         .from('vende' as never)
         .select('role')
