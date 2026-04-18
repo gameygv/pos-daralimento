@@ -35,7 +35,7 @@ export function SettingsForm({ initialData, saving, onSave }: SettingsFormProps)
         usadmon: initialData.usadmon ?? null,
         usaventa: initialData.usaventa ?? null,
         ultclt: initialData.ultclt ?? null,
-        modo_seguro_t: false,
+        modo_seguro_t: initialData.modo_seguro_t ?? false,
       });
     }
   }, [initialData]);

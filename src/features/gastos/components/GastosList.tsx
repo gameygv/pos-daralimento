@@ -167,7 +167,7 @@ export function GastosList() {
           className="w-[160px]"
           placeholder="Hasta"
         />
-        <Select value={filterCategoriaId} onValueChange={setFilterCategoriaId}>
+        <Select value={filterCategoriaId} onValueChange={(v) => setFilterCategoriaId(v === 'all' ? '' : v)}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Todas las categorías" />
           </SelectTrigger>
@@ -315,12 +315,12 @@ export function GastosList() {
               </div>
               <div className="space-y-2">
                 <Label>Categoría padre (opcional)</Label>
-                <Select value={newCatParentId} onValueChange={setNewCatParentId}>
+                <Select value={newCatParentId} onValueChange={(v) => setNewCatParentId(v === 'root' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Raíz (categoría principal)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Raíz (categoría principal)</SelectItem>
+                    <SelectItem value="root">Raíz (categoría principal)</SelectItem>
                     {parents.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.nombre}
