@@ -42,7 +42,7 @@ const menuItems: MenuItem[] = [
   { label: 'Creditos',       path: '/creditos',      icon: Wallet, permission: 'creditos' },
   { label: 'Gastos',         path: '/gastos',        icon: Wallet, permission: 'gastos' },
   { label: 'Usuarios',       path: '/usuarios',      icon: Settings, permission: 'usuarios' },
-  { label: 'Tiendas',        path: '/tiendas',       icon: Store, permission: 'tiendas' },
+  { label: 'Sucursales',      path: '/tiendas',       icon: Store, permission: 'tiendas' },
   { label: 'Cajas',          path: '/cajas',         icon: Monitor, permission: 'cajas' },
   { label: 'Configuracion',  path: '/configuracion', icon: Settings, permission: 'configuracion' },
   { label: 'Etiquetas',      path: '/etiquetas',     icon: Tags, permission: 'etiquetas' },

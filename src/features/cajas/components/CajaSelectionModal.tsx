@@ -106,22 +106,22 @@ export function CajaSelectionModal({ open, onCajaSelected }: CajaSelectionModalP
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : effectiveStep === 'tienda' ? (
-          /* ===== STEP 1: Select Tienda ===== */
+          /* ===== STEP 1: Select Punto de Venta ===== */
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl">
                 <Store className="h-5 w-5" />
-                Seleccionar Tienda
+                Seleccionar Punto de Venta
               </DialogTitle>
               <DialogDescription>
-                Selecciona la sucursal donde vas a trabajar
+                Selecciona el punto de venta donde vas a trabajar
               </DialogDescription>
             </DialogHeader>
 
             {effectiveTiendas.length === 0 ? (
               <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
                 <Store className="mx-auto mb-2 h-8 w-8" />
-                <p>No hay tiendas disponibles para tu usuario.</p>
+                <p>No hay puntos de venta disponibles para tu usuario.</p>
                 <p className="text-sm">Contacta al administrador.</p>
               </div>
             ) : (
@@ -165,7 +165,7 @@ export function CajaSelectionModal({ open, onCajaSelected }: CajaSelectionModalP
                 Seleccionar Caja
               </DialogTitle>
               <DialogDescription>
-                {activeTienda?.nombre ?? 'Tienda'} — {isAdmin
+                {activeTienda?.nombre ?? 'Punto de Venta'} — {isAdmin
                   ? 'Selecciona una caja registradora'
                   : 'Debes seleccionar una caja para continuar'}
               </DialogDescription>
@@ -174,7 +174,7 @@ export function CajaSelectionModal({ open, onCajaSelected }: CajaSelectionModalP
             {filteredCajas.length === 0 ? (
               <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
                 <Monitor className="mx-auto mb-2 h-8 w-8" />
-                <p>No hay cajas disponibles en esta tienda.</p>
+                <p>No hay cajas disponibles en este punto de venta.</p>
               </div>
             ) : (
               <div className="space-y-4">
