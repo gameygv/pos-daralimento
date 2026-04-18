@@ -1,0 +1,8 @@
+
+# RaiSE personal directory (per-developer, not shared)
+.raise/rai/personal/
+_base_repo/
+node_modules
+dist
+.vercel
+.env*.local
