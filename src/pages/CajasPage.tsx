@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Monitor, Users, Loader2, Hash } from 'lucide-react';
+import { Plus, Pencil, Trash2, Monitor, Users, Loader2, Hash, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -25,11 +25,13 @@ import {
   useUpdateCaja,
   useDeleteCaja,
   useActiveSessions,
+  useCloseCaja,
   useAllCajaUsers,
   useAssignUserToCaja,
   useUnassignUserFromCaja,
   type CajaRow,
 } from '@/features/cajas/hooks/useCajas';
+import { usePermissions } from '@/hooks/usePermissions';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -65,8 +67,10 @@ export default function CajasPage() {
   const createCaja = useCreateCaja();
   const updateCaja = useUpdateCaja();
   const deleteCaja = useDeleteCaja();
+  const closeCaja = useCloseCaja();
   const assignUser = useAssignUserToCaja();
   const unassignUser = useUnassignUserFromCaja();
+  const { isAdmin } = usePermissions();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CajaRow | null>(null);
@@ -151,6 +155,16 @@ export default function CajasPage() {
     return cajaUsers.filter((cu) => cu.caja_id === cajaId);
   }
 
+  async function handleForceClose(sessionId: string, userName: string) {
+    if (!confirm(`¿Forzar cierre de la caja abierta por ${userName}? Esta acción no hace corte de caja.`)) return;
+    try {
+      await closeCaja.mutateAsync({ sessionId, montoCierre: 0 });
+      toast.success(`Caja cerrada forzosamente (sesión de ${userName})`);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
   async function handleToggleUser(cajaId: string, userId: string, isAssigned: boolean) {
     try {
       if (isAssigned) {
@@ -224,9 +238,23 @@ export default function CajasPage() {
                     </TableCell>
                     <TableCell>
                       {session ? (
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-800">
-                          En uso por {session.user_name}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                            En uso por {session.user_name}
+                          </Badge>
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title="Forzar cierre de caja"
+                              onClick={() => void handleForceClose(session.id, session.user_name)}
+                              disabled={closeCaja.isPending}
+                            >
+                              <LogOut className="h-4 w-4 text-red-500" />
+                            </Button>
+                          )}
+                        </div>
                       ) : (
                         <Badge variant="secondary" className="bg-green-100 text-green-800">
                           Disponible
