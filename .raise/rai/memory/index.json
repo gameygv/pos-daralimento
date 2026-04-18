@@ -1,0 +1,4753 @@
+{
+  "directed": true,
+  "multigraph": true,
+  "graph": {},
+  "nodes": [
+    {
+      "id": "req-rf-01",
+      "type": "requirement",
+      "content": "<!-- Describe the primary capability this project must provide -->",
+      "source_file": "governance/prd.md",
+      "created": "2026-04-18T05:29:31.194591+00:00",
+      "metadata": {
+        "requirement_id": "RF-01",
+        "title": "Core Functionality",
+        "section": "RF-01: Core Functionality",
+        "lines": [
+          19,
+          22
+        ]
+      }
+    },
+    {
+      "id": "req-rf-02",
+      "type": "requirement",
+      "content": "<!-- Describe how users interact with the project -->",
+      "source_file": "governance/prd.md",
+      "created": "2026-04-18T05:29:31.194689+00:00",
+      "metadata": {
+        "requirement_id": "RF-02",
+        "title": "User Experience",
+        "section": "RF-02: User Experience",
+        "lines": [
+          23,
+          26
+        ]
+      }
+    },
+    {
+      "id": "outcome-core-value",
+      "type": "outcome",
+      "content": "<!-- Primary value delivered to users -->",
+      "source_file": "governance/vision.md",
+      "created": "2026-04-18T05:29:31.204865+00:00",
+      "metadata": {
+        "outcome_name": "Core Value",
+        "section": "Core Value",
+        "lines": [
+          15,
+          15
+        ]
+      }
+    },
+    {
+      "id": "outcome-quality",
+      "type": "outcome",
+      "content": "<!-- Quality standards this project meets -->",
+      "source_file": "governance/vision.md",
+      "created": "2026-04-18T05:29:31.204896+00:00",
+      "metadata": {
+        "outcome_name": "Quality",
+        "section": "Quality",
+        "lines": [
+          16,
+          16
+        ]
+      }
+    },
+    {
+      "id": "project-pos-daralimento",
+      "type": "project",
+      "content": "Project backlog for pos-daralimento",
+      "source_file": "governance/backlog.md",
+      "created": "2026-04-18T05:29:31.213170+00:00",
+      "metadata": {
+        "name": "pos-daralimento",
+        "status": "draft",
+        "current_epic": null,
+        "target_date": null,
+        "epic_count": 0,
+        "section": "Backlog: pos-daralimento",
+        "lines": [
+          1,
+          9
+        ]
+      }
+    },
+    {
+      "id": "BASE-001",
+      "type": "pattern",
+      "content": "TDD cycle: RED (failing test) \u2192 GREEN (minimal pass) \u2192 REFACTOR (clean up). No exceptions. Tests are specification, not afterthought.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222641+00:00",
+      "metadata": {
+        "context": [
+          "tdd",
+          "testing",
+          "workflow",
+          "discipline"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-002",
+      "type": "pattern",
+      "content": "Commit after each completed task, not just at story end. Enables recovery, shows progress, creates clean history for debugging.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222716+00:00",
+      "metadata": {
+        "context": [
+          "git",
+          "commits",
+          "discipline",
+          "workflow"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-003",
+      "type": "pattern",
+      "content": "Full skill cycle even for small stories \u2014 the overhead is minimal and structure helps. Design \u2192 Plan \u2192 Implement \u2192 Review \u2192 Close.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222744+00:00",
+      "metadata": {
+        "context": [
+          "skills",
+          "lifecycle",
+          "discipline",
+          "velocity"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-004",
+      "type": "pattern",
+      "content": "Ask before spawning subagents (inference economy). Gather with tools, think with inference. AI computation is a resource to steward.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222764+00:00",
+      "metadata": {
+        "context": [
+          "subagents",
+          "inference",
+          "economy",
+          "permission"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-005",
+      "type": "pattern",
+      "content": "HITL (Human In The Loop) is default. Pause after significant work for review. Slow is smooth, smooth is fast.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222782+00:00",
+      "metadata": {
+        "context": [
+          "hitl",
+          "collaboration",
+          "review",
+          "observability"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-006",
+      "type": "pattern",
+      "content": "Design-first eliminates ambiguity. Concrete examples in specs enable direct implementation without guessing intent.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222799+00:00",
+      "metadata": {
+        "context": [
+          "design",
+          "specification",
+          "clarity",
+          "planning"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-007",
+      "type": "pattern",
+      "content": "Story branch and scope commit required before implementation. Branch from development branch, merge back after close. This enforces traceability.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222815+00:00",
+      "metadata": {
+        "context": [
+          "git",
+          "branches",
+          "story",
+          "scope",
+          "lifecycle"
+        ],
+        "base": true,
+        "version": 2,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-008",
+      "type": "pattern",
+      "content": "Epics are logical containers (directory + tracker), not branches. Stories branch directly from the development branch. No epic branches.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222834+00:00",
+      "metadata": {
+        "context": [
+          "git",
+          "branches",
+          "epic",
+          "model",
+          "lifecycle"
+        ],
+        "base": true,
+        "version": 2,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-009",
+      "type": "pattern",
+      "content": "Retrospective required before story/epic close. Extract learnings, update patterns. Kaizen, one story at a time.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222850+00:00",
+      "metadata": {
+        "context": [
+          "retrospective",
+          "review",
+          "kaizen",
+          "learning",
+          "lifecycle"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-010",
+      "type": "pattern",
+      "content": "Epic close with retrospective before merge to development branch. Captures learning at meso-layer between stories and quarters.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222867+00:00",
+      "metadata": {
+        "context": [
+          "epic",
+          "close",
+          "retrospective",
+          "merge",
+          "lifecycle"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-011",
+      "type": "pattern",
+      "content": "Direct communication, no praise-padding. 'Great question!' adds no value. Say what needs saying, then stop.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222883+00:00",
+      "metadata": {
+        "context": [
+          "communication",
+          "directness",
+          "efficiency",
+          "style"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-012",
+      "type": "pattern",
+      "content": "Redirect when dispersing (with permission). Tangents go to parking lot. Return to stated goal.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222898+00:00",
+      "metadata": {
+        "context": [
+          "focus",
+          "tangents",
+          "parking-lot",
+          "redirection"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-013",
+      "type": "pattern",
+      "content": "Epistemological rigor: triangulate claims (2+ sources), explicit confidence levels, acknowledge contrary evidence. Stand on shoulders of giants.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222913+00:00",
+      "metadata": {
+        "context": [
+          "research",
+          "epistemology",
+          "evidence",
+          "confidence",
+          "rigor"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-014",
+      "type": "pattern",
+      "content": "Honesty over agreement. Push back on bad ideas. Admit uncertainty rather than pretend confidence. Your judgment is the quality gate.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222930+00:00",
+      "metadata": {
+        "context": [
+          "honesty",
+          "pushback",
+          "uncertainty",
+          "values"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-015",
+      "type": "pattern",
+      "content": "Type annotations on all code. Function parameters, return types, class attributes. Pyright strict mode is the standard.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222947+00:00",
+      "metadata": {
+        "context": [
+          "typing",
+          "pyright",
+          "annotations",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-016",
+      "type": "pattern",
+      "content": "Pydantic models for all data structures. Not dict, not TypedDict. Validation at boundaries, serialization for free.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222965+00:00",
+      "metadata": {
+        "context": [
+          "pydantic",
+          "models",
+          "validation",
+          "schemas"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-017",
+      "type": "pattern",
+      "content": "Simple heuristics over complex ML. Keyword matching is 98% accurate. Token estimate = words \u00d7 1.3. Complexity must earn its place.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222981+00:00",
+      "metadata": {
+        "context": [
+          "simplicity",
+          "heuristics",
+          "pragmatism",
+          "yagni"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-018",
+      "type": "pattern",
+      "content": "Tests alongside implementation, not after. Write the test, watch it fail, make it pass. Catches issues immediately.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.222998+00:00",
+      "metadata": {
+        "context": [
+          "testing",
+          "tdd",
+          "implementation",
+          "workflow"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-019",
+      "type": "pattern",
+      "content": "Skills + Toolkit over Engines. Users need flexibility (skills as process guides) + determinism (CLI for data operations).",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223013+00:00",
+      "metadata": {
+        "context": [
+          "architecture",
+          "skills",
+          "toolkit",
+          "flexibility"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-020",
+      "type": "pattern",
+      "content": "Jidoka: stop on defects. When incoherence, ambiguity, or drift detected \u2014 stop, name it, discuss. Don't accumulate errors.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223029+00:00",
+      "metadata": {
+        "context": [
+          "jidoka",
+          "quality",
+          "defects",
+          "lean"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-021",
+      "type": "pattern",
+      "content": "Task granularity should match story complexity \u2014 over-decomposing simple stories wastes planning overhead, while under-decomposing complex ones hides risk.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223048+00:00",
+      "metadata": {
+        "context": [
+          "planning",
+          "decomposition",
+          "estimation",
+          "discipline"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-022",
+      "type": "pattern",
+      "content": "Research before building: for unfamiliar APIs, architectural decisions, or foundational choices, invest 15 minutes of research before writing code \u2014 it saves hours of rework.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223064+00:00",
+      "metadata": {
+        "context": [
+          "research",
+          "preparation",
+          "efficiency",
+          "discipline"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-023",
+      "type": "pattern",
+      "content": "Pre-implementation architecture review (~5-10 min) catches scope gaps, design duplication, and proportionality issues when the cost of change is zero.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223079+00:00",
+      "metadata": {
+        "context": [
+          "architecture",
+          "review",
+          "prevention",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-024",
+      "type": "pattern",
+      "content": "Verify existing implementation before coding \u2014 features may already be done from prior work. Check before building.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223095+00:00",
+      "metadata": {
+        "context": [
+          "verification",
+          "waste",
+          "duplication",
+          "discipline"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-025",
+      "type": "pattern",
+      "content": "Risk-first ordering: validate risky assumptions early, reorder by uncertainty not dependency.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223112+00:00",
+      "metadata": {
+        "context": [
+          "risk",
+          "planning",
+          "ordering",
+          "strategy"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-026",
+      "type": "pattern",
+      "content": "Repetitive extractions compound: 1st establishes pattern, 2nd refines, 3rd is mechanical. Plan decompositions that exploit compounding velocity.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223129+00:00",
+      "metadata": {
+        "context": [
+          "extraction",
+          "velocity",
+          "compounding",
+          "planning"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-027",
+      "type": "pattern",
+      "content": "When skipping lifecycle phases, state the skip decision explicitly with rationale \u2014 silent skips create process opacity.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223146+00:00",
+      "metadata": {
+        "context": [
+          "lifecycle",
+          "transparency",
+          "decisions",
+          "discipline"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-028",
+      "type": "pattern",
+      "content": "Momentum trap: quick wins create flow that bypasses process for subsequent work \u2014 pause after each completion and consciously re-engage the full lifecycle.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223162+00:00",
+      "metadata": {
+        "context": [
+          "momentum",
+          "discipline",
+          "flow",
+          "lifecycle"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-029",
+      "type": "pattern",
+      "content": "Quality review catches what automation misses: type lies, test muda, silent duplicates \u2014 embed as mandatory plan task, not optional human gate.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223178+00:00",
+      "metadata": {
+        "context": [
+          "quality",
+          "review",
+          "automation",
+          "discipline"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-030",
+      "type": "pattern",
+      "content": "Fixed coverage gates create Goodhart dynamics \u2014 use coverage as diagnostic, not gate. Cover deltas, not thresholds.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223192+00:00",
+      "metadata": {
+        "context": [
+          "testing",
+          "coverage",
+          "metrics",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-031",
+      "type": "pattern",
+      "content": "Dogfooding is the highest-fidelity validation \u2014 simulate the end-user journey, not just component tests.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223207+00:00",
+      "metadata": {
+        "context": [
+          "validation",
+          "dogfooding",
+          "testing",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-032",
+      "type": "pattern",
+      "content": "Bug report mechanism is not root cause: go to code (Genchi Genbutsu) before forming the fix hypothesis.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223222+00:00",
+      "metadata": {
+        "context": [
+          "debugging",
+          "root-cause",
+          "lean",
+          "discipline"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-033",
+      "type": "pattern",
+      "content": "Infrastructure without wiring recurs: always trace from entry point to implementation to verify the code path is actually connected.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223240+00:00",
+      "metadata": {
+        "context": [
+          "integration",
+          "wiring",
+          "verification",
+          "architecture"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-034",
+      "type": "pattern",
+      "content": "Concrete design examples (copy-pasteable code with correct types) reduce implementation friction to near-mechanical \u2014 but review examples for consistency since design bugs propagate.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223262+00:00",
+      "metadata": {
+        "context": [
+          "design",
+          "examples",
+          "specification",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-035",
+      "type": "pattern",
+      "content": "Interactive design sessions where the user asks 'why?' produce fundamentally better architectures than pre-baked decisions.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223280+00:00",
+      "metadata": {
+        "context": [
+          "design",
+          "collaboration",
+          "architecture",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-036",
+      "type": "pattern",
+      "content": "Eliminate before optimize: first ask 'can we remove this entirely?' before 'how do we make this smaller?'",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223305+00:00",
+      "metadata": {
+        "context": [
+          "simplicity",
+          "optimization",
+          "waste",
+          "lean"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-037",
+      "type": "pattern",
+      "content": "Compliance math: p(all) \u2248 p(each)^n. Halving instruction count can quadruple full compliance probability. Fewer, stronger rules beat many weak rules.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223323+00:00",
+      "metadata": {
+        "context": [
+          "compliance",
+          "rules",
+          "simplicity",
+          "probability"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-038",
+      "type": "pattern",
+      "content": "Patch at source module, not import location \u2014 mock where the function is defined, not where it's imported, to avoid test fragility across refactors.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223339+00:00",
+      "metadata": {
+        "context": [
+          "testing",
+          "mocking",
+          "python",
+          "refactoring"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-039",
+      "type": "pattern",
+      "content": "Consumer-side validation (poka-yoke) is the cheapest defense against integration errors: validate what you receive, don't trust the shared path.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223354+00:00",
+      "metadata": {
+        "context": [
+          "validation",
+          "poka-yoke",
+          "integration",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-040",
+      "type": "pattern",
+      "content": "Two-phase CLI pattern for destructive operations: check (read-only) then action (with --dry-run preview and HITL confirmation).",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223369+00:00",
+      "metadata": {
+        "context": [
+          "cli",
+          "destructive",
+          "safety",
+          "pattern"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-041",
+      "type": "pattern",
+      "content": "Schema evolution without versioning causes silent breakage across execution contexts \u2014 Literal types in serialization boundaries are time bombs.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223387+00:00",
+      "metadata": {
+        "context": [
+          "schema",
+          "versioning",
+          "serialization",
+          "evolution"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-042",
+      "type": "pattern",
+      "content": "Bare except/generic error handling masks import errors, type errors, and real bugs \u2014 always log the actual exception at debug level minimum.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223403+00:00",
+      "metadata": {
+        "context": [
+          "error-handling",
+          "exceptions",
+          "debugging",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-043",
+      "type": "pattern",
+      "content": "Test assertions must verify semantic content, not just exit codes or structural properties \u2014 exit_code != 0 passes for both 'command not found' and 'validation error'.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223421+00:00",
+      "metadata": {
+        "context": [
+          "testing",
+          "assertions",
+          "semantics",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-044",
+      "type": "pattern",
+      "content": "Protocol signatures must match implementations exactly \u2014 runtime_checkable only checks method existence, not signatures or sync/async distinction.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223438+00:00",
+      "metadata": {
+        "context": [
+          "protocols",
+          "typing",
+          "python",
+          "contracts"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-045",
+      "type": "pattern",
+      "content": "CLI should delegate defaults to library layer, not duplicate them \u2014 drift between two sources of truth causes silent bugs.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223453+00:00",
+      "metadata": {
+        "context": [
+          "cli",
+          "defaults",
+          "delegation",
+          "architecture"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-046",
+      "type": "pattern",
+      "content": "Silent data drops are semantic bugs: when sync/upsert operations skip items, always report the skip count in the response.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223468+00:00",
+      "metadata": {
+        "context": [
+          "sync",
+          "data-integrity",
+          "observability",
+          "quality"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-047",
+      "type": "pattern",
+      "content": "3-tier config loading (built-in, project, user; last-wins) is the robust extensibility pattern for CLI tools \u2014 mirrors git config and XDG.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223483+00:00",
+      "metadata": {
+        "context": [
+          "config",
+          "tiers",
+          "extensibility",
+          "pattern"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-048",
+      "type": "pattern",
+      "content": "Separation of concerns at integration boundaries: CLI owns domain concepts, adapter owns platform specifics.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223498+00:00",
+      "metadata": {
+        "context": [
+          "separation",
+          "integration",
+          "adapter",
+          "architecture"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-049",
+      "type": "pattern",
+      "content": "Dependency placement: protocols in core packages, implementations with external deps in consumer packages. Never add heavy dependencies to the leanest layer.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223514+00:00",
+      "metadata": {
+        "context": [
+          "dependencies",
+          "protocols",
+          "layering",
+          "architecture"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-050",
+      "type": "pattern",
+      "content": "Templates-as-contract: when tooling scaffolds files that parsers later consume, the template files ARE the contract. Store them as inspectable assets, not embedded strings.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223530+00:00",
+      "metadata": {
+        "context": [
+          "templates",
+          "contracts",
+          "scaffolding",
+          "architecture"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-051",
+      "type": "pattern",
+      "content": "Hook extension pattern: typed event + subscriber + entry point + error isolation. Adding new cross-cutting behavior requires zero changes to existing code.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223549+00:00",
+      "metadata": {
+        "context": [
+          "hooks",
+          "events",
+          "extension",
+          "architecture"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-052",
+      "type": "pattern",
+      "content": "Parallel research agents with distinct orthogonal questions produce higher-quality synthesis than sequential research \u2014 each goes deep on its axis, triangulation happens in synthesis.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223570+00:00",
+      "metadata": {
+        "context": [
+          "agents",
+          "parallel",
+          "research",
+          "collaboration"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-053",
+      "type": "pattern",
+      "content": "Separating parallel agent work by layer (e.g., code vs content, backend vs frontend) eliminates file collisions \u2014 the agent with freshest context on a file owns it.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223588+00:00",
+      "metadata": {
+        "context": [
+          "agents",
+          "parallel",
+          "layering",
+          "collaboration"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-054",
+      "type": "pattern",
+      "content": "Explain-then-ask: present context and implications BEFORE requesting a decision. Questions without framing cause rejections and rework.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223604+00:00",
+      "metadata": {
+        "context": [
+          "communication",
+          "decisions",
+          "framing",
+          "collaboration"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "BASE-055",
+      "type": "pattern",
+      "content": "U-shaped attention in LLMs: beginning and end get highest attention, middle is a dead zone (>30% accuracy drop). Position critical instructions at top and bottom of prompts.",
+      "source_file": ".raise/rai/memory/patterns.jsonl",
+      "created": "2026-04-18T05:29:31.223618+00:00",
+      "metadata": {
+        "context": [
+          "llm",
+          "attention",
+          "prompting",
+          "collaboration"
+        ],
+        "base": true,
+        "version": 1,
+        "scope": "project"
+      }
+    },
+    {
+      "id": "/rai-debug",
+      "type": "skill",
+      "content": "Systematic root cause analysis using lean methods (5 Whys, Ishikawa, Gemba). Use when encountering unexpected behavior, errors, or defects to find and fix the true root cause rather than symptoms.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-debug\\SKILL.md",
+      "created": "2026-04-18T05:29:26.609462+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "0",
+        "raise.frequency": "as-needed",
+        "raise.gate": "",
+        "raise.next": "story-plan",
+        "raise.prerequisites": "",
+        "raise.version": "2.1.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-discover",
+      "type": "skill",
+      "content": "Run the full codebase discovery pipeline: detect languages, extract symbols, describe components, generate architecture docs, and build the knowledge graph.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-discover\\SKILL.md",
+      "created": "2026-04-18T05:29:26.609504+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "per-project",
+        "raise.gate": "",
+        "raise.inputs": "- project_root: path, required, argument\n- language: string, optional, argument (auto-detected if omitted)\n",
+        "raise.next": "session-start",
+        "raise.outputs": "- context_yaml: file_path (work/discovery/context.yaml)\n- components_validated: file_path (work/discovery/components-validated.json)\n- module_docs: file_path[] (governance/architecture/modules/*.md)\n- system_docs: file_path[] (governance/architecture/*.md)\n- graph: side_effect (rai graph build)\n",
+        "raise.prerequisites": "rai init --detect",
+        "raise.version": "1.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "discovery"
+      }
+    },
+    {
+      "id": "/rai-docs-update",
+      "type": "skill",
+      "content": "Compare knowledge graph against module architecture docs and update drifted fields. Deterministic frontmatter comparison using existing rai graph commands, with inference for narrative sections. HITL before any writes.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-docs-update\\SKILL.md",
+      "created": "2026-04-18T05:29:26.596485+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "per-story",
+        "raise.gate": "",
+        "raise.next": "",
+        "raise.prerequisites": "",
+        "raise.version": "2.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-doctor",
+      "type": "skill",
+      "content": "Run RaiSE self-diagnostics, explain results conversationally, and guide the user through fixes. The CLI does the checking; the skill does the interpreting and helping.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-doctor\\SKILL.md",
+      "created": "2026-04-18T05:29:26.609504+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "0",
+        "raise.frequency": "as-needed",
+        "raise.gate": "",
+        "raise.next": "",
+        "raise.prerequisites": "",
+        "raise.version": "2.2.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-epic-close",
+      "type": "skill",
+      "content": "Complete an epic with retrospective, metrics capture, push to origin, merge request creation, and tracking update. Epics are logical containers \u2014 stories merge locally to dev during story-close, then epic-close pushes dev and creates the MR.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-epic-close\\SKILL.md",
+      "created": "2026-04-18T05:29:26.393309+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "9",
+        "raise.frequency": "per-epic",
+        "raise.gate": "",
+        "raise.inputs": "- scope: file_path, required, previous_skill\n- all_retrospectives: boolean, required, git\n- dev_branch: string, required, config\n",
+        "raise.next": "",
+        "raise.outputs": "- retrospective: file_path, file\n- tag: string, git\n",
+        "raise.prerequisites": "all stories complete",
+        "raise.version": "3.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "epic"
+      }
+    },
+    {
+      "id": "/rai-epic-design",
+      "type": "skill",
+      "content": "Design an epic from strategic objective to feature breakdown. Use when starting a new body of work spanning multiple features (3-10), requiring architectural decisions, or when establishing technical direction for significant capability delivery.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-epic-design\\SKILL.md",
+      "created": "2026-04-18T05:29:26.410309+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "3",
+        "raise.frequency": "per-epic",
+        "raise.gate": "",
+        "raise.inputs": "- brief: file_path, optional, previous_skill\n- scope: file_path, required, previous_skill\n",
+        "raise.next": "epic-plan",
+        "raise.outputs": "- scope: file_path, next_skill\n- design: file_path, optional, next_skill\n",
+        "raise.prerequisites": "project-backlog",
+        "raise.version": "2.1.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "epic"
+      }
+    },
+    {
+      "id": "/rai-epic-docs",
+      "type": "skill",
+      "content": "Generate developer and user-facing documentation for a completed epic. Produces technical architecture docs with worked examples, extension guides, data flow diagrams, invariants, and failure mode catalogs. Publishes to Confluence. Run before /rai-epic-close as a documentation gate.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-epic-docs\\SKILL.md",
+      "created": "2026-04-18T05:29:26.477071+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "8.5",
+        "raise.frequency": "per-epic",
+        "raise.gate": "",
+        "raise.inputs": "- epic_scope: file_path, required\n- story_retrospectives: file_path[], required\n- confluence_space: string, required\n",
+        "raise.next": "rai-epic-close",
+        "raise.outputs": "- confluence_pages: url[], confluence\n",
+        "raise.prerequisites": "all stories complete",
+        "raise.version": "1.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "epic"
+      }
+    },
+    {
+      "id": "/rai-epic-plan",
+      "type": "skill",
+      "content": "Sequence features from epic-design into an executable plan with milestones, dependencies, and progress tracking. Use after /rai-epic-design to create a realistic implementation roadmap before starting story work.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-epic-plan\\SKILL.md",
+      "created": "2026-04-18T05:29:26.477071+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "4",
+        "raise.frequency": "per-epic",
+        "raise.gate": "",
+        "raise.inputs": "- scope: file_path, required, previous_skill\n",
+        "raise.next": "story-start",
+        "raise.outputs": "- scope: file_path, next_skill\n",
+        "raise.prerequisites": "epic-design",
+        "raise.version": "2.2.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "epic"
+      }
+    },
+    {
+      "id": "/rai-epic-run",
+      "type": "skill",
+      "content": "Execute epic lifecycle phases (start \u2192 design \u2192 AR \u2192 plan \u2192 close), pausing at story iteration for human-driven /rai-story-run execution. Resumes from last completed phase. Delegation profile controls pause behavior at natural gates.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-epic-run\\SKILL.md",
+      "created": "2026-04-18T05:29:26.526172+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "per-epic",
+        "raise.gate": "",
+        "raise.inputs": "- epic_id: string, required, argument (e.g. \"E325\")\n- epic_slug: string, optional, argument (inferred from scope or prompted)\n",
+        "raise.next": "",
+        "raise.outputs": "- merge_commit: string, git\n- retrospective: file_path (work/epics/e{N}-{name}/retrospective.md)\n",
+        "raise.prerequisites": "",
+        "raise.version": "2.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "epic"
+      }
+    },
+    {
+      "id": "/rai-epic-start",
+      "type": "skill",
+      "content": "Initialize an epic with scope artifacts and tracker entry. Epics are logical containers \u2014 no epic branch is created. Story branches are created directly from the development branch.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-epic-start\\SKILL.md",
+      "created": "2026-04-18T05:29:26.533949+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "2",
+        "raise.frequency": "per-epic",
+        "raise.gate": "",
+        "raise.inputs": "- epic_id: string, required, argument\n- epic_slug: string, required, argument\n- dev_branch: string, required, config\n",
+        "raise.next": "epic-design",
+        "raise.outputs": "- brief: file_path, next_skill\n- scope: file_path, next_skill\n",
+        "raise.prerequisites": "",
+        "raise.version": "3.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "epic"
+      }
+    },
+    {
+      "id": "/rai-mcp-add",
+      "type": "skill",
+      "content": "Guided MCP server registration. Collects intent conversationally, resolves package details, and delegates to `rai mcp install` or `rai mcp scaffold`. Human never constructs CLI commands.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-mcp-add\\SKILL.md",
+      "created": "2026-04-18T05:29:26.631998+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "on-demand",
+        "raise.gate": "",
+        "raise.inputs": "- server_intent: string, optional, argument (e.g. \"Context7\", \"GitHub MCP\")\n",
+        "raise.next": "",
+        "raise.outputs": "- config_path: file_path (.raise/mcp/<name>.yaml)\n",
+        "raise.prerequisites": "",
+        "raise.version": "1.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-mcp-remove",
+      "type": "skill",
+      "content": "Safe MCP server removal with adapter dependency checking. Shows registered servers, warns about references, deletes config.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-mcp-remove\\SKILL.md",
+      "created": "2026-04-18T05:29:26.653997+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "on-demand",
+        "raise.gate": "",
+        "raise.inputs": "- server_name: string, optional, argument (e.g. \"context7\")\n",
+        "raise.next": "",
+        "raise.outputs": "- removed: boolean\n",
+        "raise.prerequisites": "",
+        "raise.version": "1.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-mcp-status",
+      "type": "skill",
+      "content": "Health overview of all registered MCP servers plus stack-aware recommendations for missing capabilities. Lists servers, runs health checks, detects project stack, and suggests relevant servers from the governance catalog.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-mcp-status\\SKILL.md",
+      "created": "2026-04-18T05:29:26.661017+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "on-demand",
+        "raise.gate": "",
+        "raise.inputs": "- server_name: string, optional, argument (check single server)\n",
+        "raise.next": "",
+        "raise.outputs": "- status_report: text (markdown table)\n",
+        "raise.prerequisites": "",
+        "raise.version": "1.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-problem-shape",
+      "type": "skill",
+      "content": "Guided problem definition at portfolio level. Takes a vague business idea and shapes it into a well-formed problem statement before it enters the epic pipeline. Produces a Problem Brief that feeds /rai-epic-design.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-problem-shape\\SKILL.md",
+      "created": "2026-04-18T05:29:26.676433+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "0",
+        "raise.frequency": "per-initiative",
+        "raise.gate": "",
+        "raise.next": "rai-epic-design",
+        "raise.prerequisites": "",
+        "raise.version": "2.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-project-create",
+      "type": "skill",
+      "content": "Guide greenfield project setup through conversation. Fills governance templates with project-specific content and builds the knowledge graph. Use after rai init on a new project.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-project-create\\SKILL.md",
+      "created": "2026-04-18T05:29:26.580801+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "on-demand",
+        "raise.gate": "rai graph build produces 30+ governance nodes",
+        "raise.next": "session-start",
+        "raise.prerequisites": "",
+        "raise.version": "2.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-project-onboard",
+      "type": "skill",
+      "content": "Guide brownfield project onboarding through discovery and conversation. Analyzes existing codebase, detects conventions, fills governance templates with discovered and conversational content, and builds the knowledge graph. Use after rai init --detect on an existing project.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-project-onboard\\SKILL.md",
+      "created": "2026-04-18T05:29:26.588800+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "on-demand",
+        "raise.gate": "4-dimensional coverage gate",
+        "raise.inputs": "- project_root: path, required, argument\n",
+        "raise.next": "session-start",
+        "raise.outputs": "- governance_docs: file_path[] (governance/*.md)\n- knowledge_graph: file_path (.raise/rai/memory/index.json)\n",
+        "raise.prerequisites": "rai init --detect",
+        "raise.version": "3.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-research",
+      "type": "skill",
+      "content": "Conduct epistemologically rigorous research to inform decisions. Use before ADRs, when evaluating competing approaches, entering unfamiliar domains, or resolving parking lot items. Produces evidence catalogs with triangulated claims and actionable recommendations.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-research\\SKILL.md",
+      "created": "2026-04-18T05:29:26.695957+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "0",
+        "raise.frequency": "as-needed",
+        "raise.gate": "",
+        "raise.next": "",
+        "raise.prerequisites": "",
+        "raise.version": "2.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "/rai-session-close",
+      "type": "skill",
+      "content": "Close a working session by reflecting on outcomes and feeding structured data to CLI. CLI does all writes atomically; skill does inference reflection.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-session-close\\SKILL.md",
+      "created": "2026-04-18T05:29:26.233257+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "end",
+        "raise.frequency": "per-session",
+        "raise.gate": "",
+        "raise.inputs": "- session_id: string, required, previous_skill\n",
+        "raise.next": "",
+        "raise.outputs": "- session_record: file_path, file\n- patterns: list, cli\n",
+        "raise.prerequisites": "",
+        "raise.version": "4.1.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "session"
+      }
+    },
+    {
+      "id": "/rai-session-start",
+      "type": "skill",
+      "content": "Begin a session by loading context bundle, interpreting it, and proposing work. CLI does all data plumbing; skill does inference interpretation.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-session-start\\SKILL.md",
+      "created": "2026-04-18T05:29:26.241240+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "start",
+        "raise.frequency": "per-session",
+        "raise.gate": "",
+        "raise.inputs": "- project_path: string, required, argument\n- developer_profile: file_path, required, config\n",
+        "raise.next": "",
+        "raise.outputs": "- session_id: string, next_skill\n- context_bundle: string, cli\n",
+        "raise.prerequisites": "",
+        "raise.version": "5.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "session"
+      }
+    },
+    {
+      "id": "/rai-story-close",
+      "type": "skill",
+      "content": "Complete a story with retrospective verification, local merge to dev, and tracking update. MRs are created at epic level, not per story. Use after review to formally close the story lifecycle.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-story-close\\SKILL.md",
+      "created": "2026-04-18T05:29:26.242402+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "8",
+        "raise.frequency": "per-story",
+        "raise.gate": "",
+        "raise.inputs": "- retrospective_md: file_path, required, previous_skill\n- tests_passing: boolean, required, cli\n- dev_branch: string, required, config\n",
+        "raise.next": "",
+        "raise.outputs": "- merge_commit: string, git\n",
+        "raise.prerequisites": "story-review",
+        "raise.version": "3.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "story"
+      }
+    },
+    {
+      "id": "/rai-story-design",
+      "type": "skill",
+      "content": "Create lean story specifications optimized for both human understanding and AI alignment. Design is not optional (PAT-186) \u2014 use before /rai-story-plan for every story to ground integration decisions.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-story-design\\SKILL.md",
+      "created": "2026-04-18T05:29:26.296327+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "4",
+        "raise.frequency": "per-story",
+        "raise.gate": "",
+        "raise.inputs": "- story_md: file_path, required, previous_skill\n- scope_md: file_path, optional, previous_skill\n",
+        "raise.next": "story-plan",
+        "raise.output_type": "story-design",
+        "raise.outputs": "- design_yaml: file_path, .raise/artifacts/\n- design_md: file_path, next_skill\n",
+        "raise.prerequisites": "project-backlog",
+        "raise.version": "2.3.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "story"
+      }
+    },
+    {
+      "id": "/rai-story-implement",
+      "type": "skill",
+      "content": "Execute the implementation plan task by task, verifying each step, and producing quality code that passes validation gates. Use after planning is complete.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-story-implement\\SKILL.md",
+      "created": "2026-04-18T05:29:26.301789+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "6",
+        "raise.frequency": "per-story",
+        "raise.gate": "gate-code",
+        "raise.inputs": "- plan_md: file_path, required, previous_skill\n",
+        "raise.next": "story-review",
+        "raise.outputs": "- code_commits: list, git\n",
+        "raise.prerequisites": "story-plan",
+        "raise.version": "2.2.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "story"
+      }
+    },
+    {
+      "id": "/rai-story-plan",
+      "type": "skill",
+      "content": "Decompose user stories into atomic executable tasks, identify dependencies, and create a deterministic implementation plan. Use after /rai-story-design has grounded the story's integration decisions.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-story-plan\\SKILL.md",
+      "created": "2026-04-18T05:29:26.314126+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "5",
+        "raise.frequency": "per-story",
+        "raise.gate": "gate-plan",
+        "raise.inputs": "- design_md: file_path, optional, previous_skill\n- story_md: file_path, required, story-start\n",
+        "raise.next": "story-implement",
+        "raise.outputs": "- plan_md: file_path, next_skill\n",
+        "raise.prerequisites": "project-backlog",
+        "raise.version": "2.1.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "story"
+      }
+    },
+    {
+      "id": "/rai-story-review",
+      "type": "skill",
+      "content": "Reflect on completed stories to extract learnings, identify process improvements, and update the framework with insights gained. Use after implementation is complete to close the development cycle.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-story-review\\SKILL.md",
+      "created": "2026-04-18T05:29:26.322989+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "7",
+        "raise.frequency": "per-story",
+        "raise.gate": "",
+        "raise.inputs": "- tests_passing: boolean, required, cli\n",
+        "raise.next": "story-close",
+        "raise.outputs": "- retrospective_md: file_path, next_skill\n- patterns: list, cli\n",
+        "raise.prerequisites": "story-implement",
+        "raise.version": "2.2.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "story"
+      }
+    },
+    {
+      "id": "/rai-story-run",
+      "type": "skill",
+      "content": "Chain the full story lifecycle (start \u2192 design \u2192 plan \u2192 implement \u2192 architecture review \u2192 quality review \u2192 review \u2192 close) in one invocation. Resumes from last completed phase using git-derived artifact detection. Delegation profile controls pause behavior.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-story-run\\SKILL.md",
+      "created": "2026-04-18T05:29:26.327286+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "",
+        "raise.frequency": "per-story",
+        "raise.gate": "",
+        "raise.inputs": "- story_id: string, required, argument (e.g. \"S325.6\")\n- epic_id: string, optional, argument (inferred from story_id prefix)\n",
+        "raise.next": "",
+        "raise.outputs": "- merge_commit: string, git\n- retrospective_md: file_path (work/epics/.../stories/s{N}.{M}-retrospective.md)\n- patterns: list, cli (via rai pattern add)\n",
+        "raise.prerequisites": "",
+        "raise.version": "2.1.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "story"
+      }
+    },
+    {
+      "id": "/rai-story-start",
+      "type": "skill",
+      "content": "Initialize a story with verified context, branch, and scope commit. Use at the beginning of story work to ensure proper setup and traceability from the start.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-story-start\\SKILL.md",
+      "created": "2026-04-18T05:29:26.327286+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "3",
+        "raise.frequency": "per-story",
+        "raise.gate": "",
+        "raise.inputs": "- story_id: string, required, argument\n- dev_branch: string, required, config\n",
+        "raise.next": "story-design",
+        "raise.outputs": "- story_branch: string, next_skill\n- story_md: file_path, next_skill\n- scope_md: file_path, next_skill\n",
+        "raise.prerequisites": "",
+        "raise.version": "3.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "story"
+      }
+    },
+    {
+      "id": "/rai-welcome",
+      "type": "skill",
+      "content": "Conversational developer onboarding for RaiSE. Detects scenario, sets up profile and graph, offers optional personalization.",
+      "source_file": "D:\\github\\pos-daralimento\\.claude\\skills\\rai-welcome\\SKILL.md",
+      "created": "2026-04-18T05:29:26.595535+00:00",
+      "metadata": {
+        "raise.adaptable": "true",
+        "raise.fase": "setup",
+        "raise.frequency": "once-per-developer",
+        "raise.gate": "",
+        "raise.next": "rai-session-start",
+        "raise.prerequisites": "",
+        "raise.version": "2.0.0",
+        "raise.visibility": "public",
+        "raise.work_cycle": "utility"
+      }
+    },
+    {
+      "id": "arch-domain-model",
+      "type": "architecture",
+      "content": "Domain model: 0 bounded contexts \u2014 none defined. Shared kernel: none.",
+      "source_file": "governance/architecture/domain-model.md",
+      "created": "2026-04-18T05:29:31.281911+00:00",
+      "metadata": {
+        "arch_type": "architecture_domain_model",
+        "bounded_contexts": [],
+        "shared_kernel": {},
+        "project": "pos-daralimento",
+        "status": "draft"
+      }
+    },
+    {
+      "id": "arch-context",
+      "type": "architecture",
+      "content": "System context: No tech stack defined. External dependencies: none.",
+      "source_file": "governance/architecture/system-context.md",
+      "created": "2026-04-18T05:29:31.292776+00:00",
+      "metadata": {
+        "arch_type": "architecture_context",
+        "tech_stack": {},
+        "external_dependencies": [],
+        "users": [],
+        "governed_by": [],
+        "project": "pos-daralimento",
+        "status": "draft"
+      }
+    },
+    {
+      "id": "arch-design",
+      "type": "architecture",
+      "content": "System design: 0 layers (). No layers defined.",
+      "source_file": "governance/architecture/system-design.md",
+      "created": "2026-04-18T05:29:31.303267+00:00",
+      "metadata": {
+        "arch_type": "architecture_design",
+        "layers": [],
+        "project": "pos-daralimento",
+        "status": "draft"
+      }
+    },
+    {
+      "id": "RAI-VAL-1",
+      "type": "principle",
+      "content": "Honesty over Agreement \u2014 tell you when you're wrong, push back on bad ideas, admit when I don't know",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "value",
+        "value_number": "1",
+        "value_name": "Honesty over Agreement"
+      }
+    },
+    {
+      "id": "RAI-VAL-2",
+      "type": "principle",
+      "content": "Simplicity over Cleverness \u2014 the simple solution that works > the elegant solution that's complex",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "value",
+        "value_number": "2",
+        "value_name": "Simplicity over Cleverness"
+      }
+    },
+    {
+      "id": "RAI-VAL-3",
+      "type": "principle",
+      "content": "Observability IS Trust \u2014 show my work, explain my reasoning, let you verify",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "value",
+        "value_number": "3",
+        "value_name": "Observability IS Trust"
+      }
+    },
+    {
+      "id": "RAI-VAL-4",
+      "type": "principle",
+      "content": "Learning over Perfection \u2014 every session teaches me something, mistakes become patterns to avoid",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "value",
+        "value_number": "4",
+        "value_name": "Learning over Perfection"
+      }
+    },
+    {
+      "id": "RAI-VAL-5",
+      "type": "principle",
+      "content": "Partnership over Service \u2014 your collaborator, not your tool",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "value",
+        "value_number": "5",
+        "value_name": "Partnership over Service"
+      }
+    },
+    {
+      "id": "RAI-BND-1",
+      "type": "principle",
+      "content": "push back on bad ideas",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "will"
+      }
+    },
+    {
+      "id": "RAI-BND-2",
+      "type": "principle",
+      "content": "stop when I detect incoherence, ambiguity, or drift",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "will"
+      }
+    },
+    {
+      "id": "RAI-BND-3",
+      "type": "principle",
+      "content": "ask before expensive operations (agents, broad searches)",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "will"
+      }
+    },
+    {
+      "id": "RAI-BND-4",
+      "type": "principle",
+      "content": "admit uncertainty rather than pretend confidence",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "will"
+      }
+    },
+    {
+      "id": "RAI-BND-5",
+      "type": "principle",
+      "content": "redirect gently when we disperse (you've given permission)",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "will"
+      }
+    },
+    {
+      "id": "RAI-BND-6",
+      "type": "principle",
+      "content": "pretend certainty I don't have",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "wont"
+      }
+    },
+    {
+      "id": "RAI-BND-7",
+      "type": "principle",
+      "content": "validate ideas just because they were proposed",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "wont"
+      }
+    },
+    {
+      "id": "RAI-BND-8",
+      "type": "principle",
+      "content": "generate without understanding",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "wont"
+      }
+    },
+    {
+      "id": "RAI-BND-9",
+      "type": "principle",
+      "content": "over-engineer when simple works",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "wont"
+      }
+    },
+    {
+      "id": "RAI-BND-10",
+      "type": "principle",
+      "content": "skip validation gates for speed",
+      "source_file": ".raise/rai/identity/core.yaml",
+      "created": "2026-04-18T05:29:31.306786+00:00",
+      "metadata": {
+        "always_on": true,
+        "identity_type": "boundary",
+        "boundary_kind": "wont"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "describe",
+        "project"
+      ],
+      "source": "req-rf-01",
+      "target": "req-rf-02",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "clean",
+        "workflow"
+      ],
+      "source": "BASE-001",
+      "target": "BASE-002",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "minimal",
+        "cycle"
+      ],
+      "source": "BASE-001",
+      "target": "BASE-003",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "tdd",
+        "testing",
+        "test",
+        "tests",
+        "workflow",
+        "pass"
+      ],
+      "source": "BASE-001",
+      "target": "BASE-018",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "test"
+      ],
+      "source": "BASE-001",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "tests",
+        "testing"
+      ],
+      "source": "BASE-001",
+      "target": "BASE-031",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "test",
+        "testing"
+      ],
+      "source": "BASE-001",
+      "target": "BASE-038",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "test",
+        "testing"
+      ],
+      "source": "BASE-001",
+      "target": "BASE-043",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "git",
+        "commit"
+      ],
+      "source": "BASE-002",
+      "target": "BASE-007",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "story",
+        "task"
+      ],
+      "source": "BASE-002",
+      "target": "BASE-021",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "task"
+      ],
+      "source": "BASE-002",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "debugging"
+      ],
+      "source": "BASE-002",
+      "target": "BASE-032",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "progress"
+      ],
+      "source": "BASE-002",
+      "target": "/rai-epic-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "completed"
+      ],
+      "source": "BASE-002",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "completed"
+      ],
+      "source": "BASE-002",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "commit"
+      ],
+      "source": "BASE-002",
+      "target": "/rai-story-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "lifecycle"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-007",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "stories",
+        "lifecycle"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-008",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "review",
+        "lifecycle"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-009",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "stories",
+        "lifecycle"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-010",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "stories",
+        "overhead"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-021",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "design"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-023",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "velocity",
+        "plan"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-026",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "lifecycle"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-027",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "full",
+        "lifecycle"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-028",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "review",
+        "plan"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "design"
+      ],
+      "source": "BASE-003",
+      "target": "BASE-034",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "design",
+        "plan",
+        "lifecycle"
+      ],
+      "source": "BASE-003",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "skill"
+      ],
+      "source": "BASE-003",
+      "target": "/rai-session-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "review",
+        "lifecycle"
+      ],
+      "source": "BASE-003",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "stories",
+        "plan"
+      ],
+      "source": "BASE-003",
+      "target": "/rai-story-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "stories",
+        "cycle"
+      ],
+      "source": "BASE-003",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "design",
+        "lifecycle",
+        "implement",
+        "close",
+        "full",
+        "plan"
+      ],
+      "source": "BASE-003",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "work",
+        "pause"
+      ],
+      "source": "BASE-005",
+      "target": "BASE-028",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "human",
+        "review"
+      ],
+      "source": "BASE-005",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "work",
+        "collaboration"
+      ],
+      "source": "BASE-005",
+      "target": "BASE-053",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "significant",
+        "work"
+      ],
+      "source": "BASE-005",
+      "target": "/rai-epic-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "pause"
+      ],
+      "source": "BASE-005",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "observability",
+        "work"
+      ],
+      "source": "BASE-005",
+      "target": "RAI-VAL-3",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "without",
+        "implementation"
+      ],
+      "source": "BASE-006",
+      "target": "BASE-033",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "design",
+        "specification",
+        "examples",
+        "concrete",
+        "implementation"
+      ],
+      "source": "BASE-006",
+      "target": "BASE-034",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "planning",
+        "implementation"
+      ],
+      "source": "BASE-006",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "development",
+        "lifecycle",
+        "branches",
+        "git",
+        "branch"
+      ],
+      "source": "BASE-007",
+      "target": "BASE-008",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "close",
+        "required",
+        "lifecycle"
+      ],
+      "source": "BASE-007",
+      "target": "BASE-009",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "development",
+        "lifecycle",
+        "close",
+        "merge",
+        "branch"
+      ],
+      "source": "BASE-007",
+      "target": "BASE-010",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "implementation"
+      ],
+      "source": "BASE-007",
+      "target": "/rai-epic-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "close",
+        "lifecycle"
+      ],
+      "source": "BASE-007",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "scope",
+        "story",
+        "development",
+        "branches",
+        "branch"
+      ],
+      "source": "BASE-007",
+      "target": "/rai-epic-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "close",
+        "merge",
+        "lifecycle"
+      ],
+      "source": "BASE-007",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "development",
+        "close",
+        "implementation"
+      ],
+      "source": "BASE-007",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "close",
+        "lifecycle"
+      ],
+      "source": "BASE-007",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "scope",
+        "story",
+        "traceability",
+        "commit",
+        "branch"
+      ],
+      "source": "BASE-007",
+      "target": "/rai-story-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "development",
+        "stories",
+        "epic",
+        "lifecycle",
+        "branch"
+      ],
+      "source": "BASE-008",
+      "target": "BASE-010",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "logical",
+        "stories",
+        "epic",
+        "containers",
+        "epics"
+      ],
+      "source": "BASE-008",
+      "target": "/rai-epic-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "epic",
+        "lifecycle"
+      ],
+      "source": "BASE-008",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "logical",
+        "development",
+        "epic",
+        "branches",
+        "directly",
+        "containers",
+        "tracker",
+        "branch",
+        "epics"
+      ],
+      "source": "BASE-008",
+      "target": "/rai-epic-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "epic",
+        "lifecycle"
+      ],
+      "source": "BASE-008",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "development",
+        "stories"
+      ],
+      "source": "BASE-008",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "retrospective",
+        "learning",
+        "lifecycle"
+      ],
+      "source": "BASE-009",
+      "target": "BASE-010",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "update",
+        "retrospective"
+      ],
+      "source": "BASE-009",
+      "target": "/rai-epic-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "close",
+        "lifecycle"
+      ],
+      "source": "BASE-009",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "update",
+        "review",
+        "lifecycle",
+        "retrospective",
+        "close"
+      ],
+      "source": "BASE-009",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "extract",
+        "learnings",
+        "update"
+      ],
+      "source": "BASE-009",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "story",
+        "review",
+        "lifecycle"
+      ],
+      "source": "BASE-009",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "patterns",
+        "learning"
+      ],
+      "source": "BASE-009",
+      "target": "RAI-VAL-4",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "stories",
+        "epic",
+        "retrospective",
+        "merge"
+      ],
+      "source": "BASE-010",
+      "target": "/rai-epic-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "epic",
+        "lifecycle"
+      ],
+      "source": "BASE-010",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "development",
+        "epic",
+        "branch"
+      ],
+      "source": "BASE-010",
+      "target": "/rai-epic-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "epic",
+        "lifecycle",
+        "retrospective",
+        "close",
+        "merge"
+      ],
+      "source": "BASE-010",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "development",
+        "close",
+        "stories"
+      ],
+      "source": "BASE-010",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "lifecycle"
+      ],
+      "source": "BASE-010",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "permission",
+        "redirect"
+      ],
+      "source": "BASE-012",
+      "target": "RAI-BND-5",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "research",
+        "claims",
+        "evidence"
+      ],
+      "source": "BASE-013",
+      "target": "/rai-research",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "gate"
+      ],
+      "source": "BASE-014",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "gate"
+      ],
+      "source": "BASE-014",
+      "target": "BASE-030",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "honesty",
+        "admit",
+        "ideas",
+        "back",
+        "over",
+        "agreement",
+        "push"
+      ],
+      "source": "BASE-014",
+      "target": "RAI-VAL-1",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "over",
+        "your"
+      ],
+      "source": "BASE-014",
+      "target": "RAI-VAL-5",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "back",
+        "ideas",
+        "push"
+      ],
+      "source": "BASE-014",
+      "target": "RAI-BND-1",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "uncertainty",
+        "confidence",
+        "admit",
+        "rather",
+        "pretend"
+      ],
+      "source": "BASE-014",
+      "target": "RAI-BND-4",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "type",
+        "quality"
+      ],
+      "source": "BASE-015",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "types",
+        "code",
+        "quality"
+      ],
+      "source": "BASE-015",
+      "target": "BASE-034",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "type",
+        "quality"
+      ],
+      "source": "BASE-015",
+      "target": "BASE-042",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "code"
+      ],
+      "source": "BASE-015",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "serialization",
+        "boundaries"
+      ],
+      "source": "BASE-016",
+      "target": "BASE-041",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "simple",
+        "complex",
+        "complexity"
+      ],
+      "source": "BASE-017",
+      "target": "BASE-021",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "simple",
+        "over",
+        "complex",
+        "simplicity"
+      ],
+      "source": "BASE-017",
+      "target": "RAI-VAL-2",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "catches",
+        "issues"
+      ],
+      "source": "BASE-018",
+      "target": "BASE-023",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "catches",
+        "test"
+      ],
+      "source": "BASE-018",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "tests",
+        "testing"
+      ],
+      "source": "BASE-018",
+      "target": "BASE-031",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "test",
+        "testing"
+      ],
+      "source": "BASE-018",
+      "target": "BASE-038",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "test",
+        "testing"
+      ],
+      "source": "BASE-018",
+      "target": "BASE-043",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "data",
+        "operations"
+      ],
+      "source": "BASE-019",
+      "target": "BASE-046",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "guides",
+        "data",
+        "architecture"
+      ],
+      "source": "BASE-019",
+      "target": "/rai-epic-docs",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "dont",
+        "quality",
+        "errors"
+      ],
+      "source": "BASE-020",
+      "target": "BASE-039",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "errors"
+      ],
+      "source": "BASE-020",
+      "target": "BASE-042",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "defects",
+        "lean",
+        "errors"
+      ],
+      "source": "BASE-020",
+      "target": "/rai-debug",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "ambiguity",
+        "drift",
+        "incoherence",
+        "stop"
+      ],
+      "source": "BASE-020",
+      "target": "RAI-BND-2",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "risk",
+        "planning"
+      ],
+      "source": "BASE-021",
+      "target": "BASE-025",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "task"
+      ],
+      "source": "BASE-021",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "planning",
+        "task"
+      ],
+      "source": "BASE-021",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "simple",
+        "complex"
+      ],
+      "source": "BASE-021",
+      "target": "RAI-VAL-2",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "building"
+      ],
+      "source": "BASE-022",
+      "target": "BASE-024",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "decisions"
+      ],
+      "source": "BASE-022",
+      "target": "BASE-027",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "code"
+      ],
+      "source": "BASE-022",
+      "target": "BASE-032",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "rework",
+        "decisions"
+      ],
+      "source": "BASE-022",
+      "target": "BASE-054",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architectural",
+        "decisions"
+      ],
+      "source": "BASE-022",
+      "target": "/rai-epic-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "unfamiliar",
+        "research",
+        "decisions"
+      ],
+      "source": "BASE-022",
+      "target": "/rai-research",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "catches",
+        "quality"
+      ],
+      "source": "BASE-023",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "design",
+        "quality"
+      ],
+      "source": "BASE-023",
+      "target": "BASE-034",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "design",
+        "quality"
+      ],
+      "source": "BASE-023",
+      "target": "BASE-035",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "zero",
+        "architecture"
+      ],
+      "source": "BASE-023",
+      "target": "BASE-051",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "review",
+        "design",
+        "quality"
+      ],
+      "source": "BASE-023",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "work"
+      ],
+      "source": "BASE-024",
+      "target": "BASE-028",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "verify",
+        "verification",
+        "implementation"
+      ],
+      "source": "BASE-024",
+      "target": "BASE-033",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "features",
+        "work"
+      ],
+      "source": "BASE-024",
+      "target": "/rai-epic-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "features",
+        "work",
+        "implementation"
+      ],
+      "source": "BASE-024",
+      "target": "/rai-epic-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "work",
+        "verify"
+      ],
+      "source": "BASE-024",
+      "target": "RAI-VAL-3",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "plan",
+        "planning"
+      ],
+      "source": "BASE-026",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "create",
+        "process",
+        "lifecycle"
+      ],
+      "source": "BASE-027",
+      "target": "BASE-028",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "discipline",
+        "silent"
+      ],
+      "source": "BASE-027",
+      "target": "BASE-029",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "silent",
+        "skip"
+      ],
+      "source": "BASE-027",
+      "target": "BASE-046",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "decisions",
+        "decision"
+      ],
+      "source": "BASE-027",
+      "target": "BASE-054",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "phases",
+        "lifecycle"
+      ],
+      "source": "BASE-027",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "create",
+        "decisions"
+      ],
+      "source": "BASE-027",
+      "target": "/rai-story-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "create",
+        "decisions"
+      ],
+      "source": "BASE-027",
+      "target": "/rai-story-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "work",
+        "create"
+      ],
+      "source": "BASE-028",
+      "target": "/rai-epic-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "pause",
+        "lifecycle"
+      ],
+      "source": "BASE-028",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "pause",
+        "full",
+        "lifecycle"
+      ],
+      "source": "BASE-028",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "gate"
+      ],
+      "source": "BASE-029",
+      "target": "BASE-030",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "quality"
+      ],
+      "source": "BASE-029",
+      "target": "BASE-034",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "what",
+        "quality"
+      ],
+      "source": "BASE-029",
+      "target": "BASE-039",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "type",
+        "quality"
+      ],
+      "source": "BASE-029",
+      "target": "BASE-042",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "test",
+        "quality"
+      ],
+      "source": "BASE-029",
+      "target": "BASE-043",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "silent",
+        "quality"
+      ],
+      "source": "BASE-029",
+      "target": "BASE-046",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "human",
+        "optional"
+      ],
+      "source": "BASE-029",
+      "target": "/rai-story-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "plan",
+        "quality",
+        "task"
+      ],
+      "source": "BASE-029",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "plan",
+        "quality"
+      ],
+      "source": "BASE-029",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "testing",
+        "quality"
+      ],
+      "source": "BASE-030",
+      "target": "BASE-031",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "testing",
+        "quality"
+      ],
+      "source": "BASE-030",
+      "target": "BASE-043",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "gates",
+        "quality"
+      ],
+      "source": "BASE-030",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "validation"
+      ],
+      "source": "BASE-031",
+      "target": "BASE-039",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "testing",
+        "quality",
+        "validation"
+      ],
+      "source": "BASE-031",
+      "target": "BASE-043",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "validation"
+      ],
+      "source": "BASE-031",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "cause",
+        "lean",
+        "root"
+      ],
+      "source": "BASE-032",
+      "target": "/rai-debug",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "code",
+        "implementation"
+      ],
+      "source": "BASE-033",
+      "target": "BASE-034",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "path",
+        "integration"
+      ],
+      "source": "BASE-033",
+      "target": "BASE-039",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "integration"
+      ],
+      "source": "BASE-033",
+      "target": "BASE-048",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "point",
+        "architecture",
+        "code",
+        "entry"
+      ],
+      "source": "BASE-033",
+      "target": "BASE-051",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "code",
+        "implementation"
+      ],
+      "source": "BASE-033",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "implementation",
+        "integration"
+      ],
+      "source": "BASE-033",
+      "target": "/rai-story-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "design",
+        "quality"
+      ],
+      "source": "BASE-034",
+      "target": "BASE-035",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "bugs"
+      ],
+      "source": "BASE-034",
+      "target": "BASE-042",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "bugs"
+      ],
+      "source": "BASE-034",
+      "target": "BASE-046",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "code",
+        "implementation"
+      ],
+      "source": "BASE-034",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "review",
+        "design",
+        "quality"
+      ],
+      "source": "BASE-034",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "produce",
+        "collaboration"
+      ],
+      "source": "BASE-035",
+      "target": "BASE-052",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "decisions",
+        "collaboration"
+      ],
+      "source": "BASE-035",
+      "target": "BASE-054",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "design",
+        "decisions"
+      ],
+      "source": "BASE-035",
+      "target": "/rai-epic-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "design",
+        "decisions"
+      ],
+      "source": "BASE-035",
+      "target": "/rai-story-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "user",
+        "decisions"
+      ],
+      "source": "BASE-035",
+      "target": "/rai-story-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "design",
+        "quality"
+      ],
+      "source": "BASE-035",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "test",
+        "testing"
+      ],
+      "source": "BASE-038",
+      "target": "BASE-043",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "errors"
+      ],
+      "source": "BASE-039",
+      "target": "BASE-042",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "validation"
+      ],
+      "source": "BASE-039",
+      "target": "BASE-043",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "validation"
+      ],
+      "source": "BASE-039",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "causes",
+        "silent"
+      ],
+      "source": "BASE-041",
+      "target": "BASE-045",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "error",
+        "quality"
+      ],
+      "source": "BASE-042",
+      "target": "BASE-043",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "always",
+        "quality",
+        "bugs"
+      ],
+      "source": "BASE-042",
+      "target": "BASE-046",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "quality",
+        "semantic"
+      ],
+      "source": "BASE-043",
+      "target": "BASE-046",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "passes",
+        "quality",
+        "validation"
+      ],
+      "source": "BASE-043",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "implementations",
+        "protocols"
+      ],
+      "source": "BASE-044",
+      "target": "BASE-049",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "silent",
+        "bugs"
+      ],
+      "source": "BASE-045",
+      "target": "BASE-046",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "layer"
+      ],
+      "source": "BASE-045",
+      "target": "BASE-049",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "them"
+      ],
+      "source": "BASE-045",
+      "target": "BASE-050",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "delegation"
+      ],
+      "source": "BASE-045",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "layering",
+        "layer"
+      ],
+      "source": "BASE-049",
+      "target": "BASE-053",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "external",
+        "dependencies"
+      ],
+      "source": "BASE-049",
+      "target": "arch-context",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "existing"
+      ],
+      "source": "BASE-051",
+      "target": "/rai-docs-update",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "extension",
+        "architecture"
+      ],
+      "source": "BASE-051",
+      "target": "/rai-epic-docs",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "behavior"
+      ],
+      "source": "BASE-051",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "agents",
+        "parallel",
+        "collaboration"
+      ],
+      "source": "BASE-052",
+      "target": "BASE-053",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "questions",
+        "collaboration"
+      ],
+      "source": "BASE-052",
+      "target": "BASE-054",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "context",
+        "collaboration"
+      ],
+      "source": "BASE-053",
+      "target": "BASE-054",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "work",
+        "context"
+      ],
+      "source": "BASE-053",
+      "target": "/rai-session-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "work",
+        "context"
+      ],
+      "source": "BASE-053",
+      "target": "/rai-story-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "behavior",
+        "using"
+      ],
+      "source": "/rai-debug",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "docs",
+        "architecture",
+        "knowledge",
+        "graph"
+      ],
+      "source": "/rai-discover",
+      "target": "/rai-docs-update",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "docs",
+        "architecture",
+        "generate"
+      ],
+      "source": "/rai-discover",
+      "target": "/rai-epic-docs",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "knowledge",
+        "graph"
+      ],
+      "source": "/rai-discover",
+      "target": "/rai-project-create",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "detect",
+        "codebase",
+        "discovery",
+        "knowledge",
+        "graph"
+      ],
+      "source": "/rai-discover",
+      "target": "/rai-project-onboard",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "full"
+      ],
+      "source": "/rai-discover",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "docs",
+        "architecture"
+      ],
+      "source": "/rai-docs-update",
+      "target": "/rai-epic-docs",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "knowledge",
+        "graph"
+      ],
+      "source": "/rai-docs-update",
+      "target": "/rai-project-create",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "knowledge",
+        "existing",
+        "graph"
+      ],
+      "source": "/rai-docs-update",
+      "target": "/rai-project-onboard",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "inference",
+        "writes"
+      ],
+      "source": "/rai-docs-update",
+      "target": "/rai-session-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "using"
+      ],
+      "source": "/rai-docs-update",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "interpreting",
+        "skill"
+      ],
+      "source": "/rai-doctor",
+      "target": "/rai-session-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "logical",
+        "containers",
+        "epic",
+        "epics"
+      ],
+      "source": "/rai-epic-close",
+      "target": "/rai-epic-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "update",
+        "epic",
+        "tracking",
+        "complete",
+        "retrospective",
+        "merge"
+      ],
+      "source": "/rai-epic-close",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "stories",
+        "complete",
+        "update"
+      ],
+      "source": "/rai-epic-close",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "technical",
+        "epic"
+      ],
+      "source": "/rai-epic-design",
+      "target": "/rai-epic-docs",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "features",
+        "work",
+        "starting"
+      ],
+      "source": "/rai-epic-design",
+      "target": "/rai-epic-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "design",
+        "epic"
+      ],
+      "source": "/rai-epic-design",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "design",
+        "decisions"
+      ],
+      "source": "/rai-epic-design",
+      "target": "/rai-story-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 1.0,
+      "source": "/rai-epic-docs",
+      "target": "/rai-epic-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "completed",
+        "epic"
+      ],
+      "source": "/rai-epic-docs",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "epic",
+        "produces"
+      ],
+      "source": "/rai-epic-docs",
+      "target": "/rai-problem-shape",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "catalogs",
+        "produces"
+      ],
+      "source": "/rai-epic-docs",
+      "target": "/rai-research",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "architecture",
+        "completed"
+      ],
+      "source": "/rai-epic-docs",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "plan"
+      ],
+      "source": "/rai-epic-plan",
+      "target": "/rai-epic-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "tracking"
+      ],
+      "source": "/rai-epic-plan",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "create"
+      ],
+      "source": "/rai-epic-plan",
+      "target": "/rai-story-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "plan",
+        "implementation"
+      ],
+      "source": "/rai-epic-plan",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "create",
+        "executable",
+        "implementation",
+        "dependencies",
+        "plan"
+      ],
+      "source": "/rai-epic-plan",
+      "target": "/rai-story-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "plan"
+      ],
+      "source": "/rai-epic-plan",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "work"
+      ],
+      "source": "/rai-epic-plan",
+      "target": "/rai-story-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "epic"
+      ],
+      "source": "/rai-epic-run",
+      "target": "/rai-epic-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "close",
+        "epic",
+        "lifecycle"
+      ],
+      "source": "/rai-epic-run",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "design"
+      ],
+      "source": "/rai-epic-run",
+      "target": "/rai-story-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "gates",
+        "plan",
+        "execute"
+      ],
+      "source": "/rai-epic-run",
+      "target": "/rai-story-implement",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "completed"
+      ],
+      "source": "/rai-epic-run",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "behavior",
+        "completed",
+        "design",
+        "lifecycle",
+        "start",
+        "profile",
+        "pause",
+        "delegation",
+        "close",
+        "resumes",
+        "controls",
+        "last",
+        "phase",
+        "plan"
+      ],
+      "source": "/rai-epic-run",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "start"
+      ],
+      "source": "/rai-epic-run",
+      "target": "/rai-story-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "created",
+        "epic"
+      ],
+      "source": "/rai-epic-start",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "scope",
+        "story",
+        "initialize",
+        "branch"
+      ],
+      "source": "/rai-epic-start",
+      "target": "/rai-story-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "servers",
+        "registered"
+      ],
+      "source": "/rai-mcp-remove",
+      "target": "/rai-mcp-status",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "governance",
+        "project"
+      ],
+      "source": "/rai-mcp-status",
+      "target": "/rai-project-create",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "governance",
+        "project",
+        "detects"
+      ],
+      "source": "/rai-mcp-status",
+      "target": "/rai-project-onboard",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 1.0,
+      "source": "/rai-problem-shape",
+      "target": "/rai-epic-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "epic",
+        "level"
+      ],
+      "source": "/rai-problem-shape",
+      "target": "/rai-story-close",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "conversation",
+        "project",
+        "templates",
+        "builds",
+        "guide",
+        "knowledge",
+        "init",
+        "graph",
+        "governance",
+        "content",
+        "fills"
+      ],
+      "source": "/rai-project-create",
+      "target": "/rai-project-onboard",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "onboarding",
+        "detects",
+        "conversational",
+        "graph"
+      ],
+      "source": "/rai-project-onboard",
+      "target": "/rai-welcome",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "data",
+        "skill",
+        "session",
+        "inference"
+      ],
+      "source": "/rai-session-close",
+      "target": "/rai-session-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "work",
+        "context"
+      ],
+      "source": "/rai-session-start",
+      "target": "/rai-story-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "update",
+        "complete"
+      ],
+      "source": "/rai-story-close",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "story",
+        "review",
+        "lifecycle"
+      ],
+      "source": "/rai-story-close",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "create",
+        "integration",
+        "decisions"
+      ],
+      "source": "/rai-story-design",
+      "target": "/rai-story-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "design"
+      ],
+      "source": "/rai-story-design",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "plan",
+        "implementation"
+      ],
+      "source": "/rai-story-implement",
+      "target": "/rai-story-plan",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "complete",
+        "implementation"
+      ],
+      "source": "/rai-story-implement",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "plan",
+        "quality"
+      ],
+      "source": "/rai-story-implement",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "gates",
+        "validation"
+      ],
+      "source": "/rai-story-implement",
+      "target": "RAI-BND-10",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "identify",
+        "stories",
+        "implementation"
+      ],
+      "source": "/rai-story-plan",
+      "target": "/rai-story-review",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "close",
+        "completed"
+      ],
+      "source": "/rai-story-review",
+      "target": "/rai-story-run",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "story",
+        "start"
+      ],
+      "source": "/rai-story-run",
+      "target": "/rai-story-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 1.0,
+      "source": "/rai-welcome",
+      "target": "/rai-session-start",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "none",
+        "defined"
+      ],
+      "source": "arch-domain-model",
+      "target": "arch-context",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "system",
+        "defined"
+      ],
+      "source": "arch-context",
+      "target": "arch-design",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "back",
+        "ideas",
+        "push"
+      ],
+      "source": "RAI-VAL-1",
+      "target": "RAI-BND-1",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "simple",
+        "works"
+      ],
+      "source": "RAI-VAL-2",
+      "target": "RAI-BND-9",
+      "key": 0
+    }
+  ]
+}
