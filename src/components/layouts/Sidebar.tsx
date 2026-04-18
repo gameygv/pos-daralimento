@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Tags, MonitorSmartphone,
   Warehouse, Users2, BarChart3, Calculator, CreditCard, Wallet,
   Settings, ScrollText, LogOut, PanelLeftClose, PanelLeft, Monitor,
-  RotateCcw, Truck,
+  RotateCcw, Truck, FileText,
   Ticket,
   Store,
 } from 'lucide-react';
@@ -27,6 +27,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { label: 'Dashboard',      path: '/',              icon: LayoutDashboard },
   { label: 'POS',            path: '/pos',           icon: MonitorSmartphone },
+  { label: 'Notas',          path: '/notas',         icon: FileText },
   { label: 'Clientes',       path: '/clientes',      icon: Users2 },
   { label: 'Productos',      path: '/productos',     icon: Package, permission: 'productos' },
   { label: 'Categorias',     path: '/categorias',    icon: Tags, permission: 'categorias' },

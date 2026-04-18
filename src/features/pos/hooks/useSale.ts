@@ -26,6 +26,8 @@ interface SaleResult {
   folioDisplay: string;
   total: number;
   items: number;
+  notaId: string;
+  entregaToken: string;
 }
 
 export function useCreateSale() {
@@ -141,15 +143,42 @@ export function useCreateSale() {
         return sum + afterItem - globalDisc;
       }, 0);
 
+      // Create nota de venta (order note) with pending payment/delivery
+      const { data: nota, error: notaErr } = (await supabase
+        .from('notas' as never)
+        .insert({
+          folio: nextFolio,
+          folio_display: folioDisplay,
+          fecha,
+          hora,
+          cliente,
+          vendedor: seller,
+          total: Math.round(total * 100) / 100,
+          metodo_pago: metodoPagoStr,
+          pago_status: 'pendiente',
+          entrega_status: 'sin_entregar',
+          ...(cajaId ? { caja_id: cajaId } : {}),
+          ...(cajaSessionId ? { caja_session_id: cajaSessionId } : {}),
+        } as never)
+        .select('id, entrega_token')
+        .single()) as unknown as {
+        data: { id: string; entrega_token: string } | null;
+        error: { message: string } | null;
+      };
+      if (notaErr) throw new Error(notaErr.message);
+
       return {
         folio: nextFolio,
         folioDisplay,
         total,
         items: items.reduce((sum, i) => sum + i.quantity, 0),
+        notaId: nota?.id ?? '',
+        entregaToken: nota?.entrega_token ?? '',
       };
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['settings'] });
+      void queryClient.invalidateQueries({ queryKey: ['notas'] });
     },
   });
 }

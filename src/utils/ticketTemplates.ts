@@ -1,4 +1,7 @@
 import { jsPDF } from 'jspdf';
+import { QRCodeSVG } from 'qrcode.react';
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
 
 export type TicketTemplate = 'standard' | 'detailed' | 'courtesy';
 
@@ -29,6 +32,7 @@ export interface FullTicketData {
   total: number;
   metodo_pago?: string;
   vendedor?: string;
+  entregaToken?: string;
 }
 
 const getBase64ImageFromURL = (url: string): Promise<{ dataURL: string; width: number; height: number }> => {
@@ -239,12 +243,68 @@ function renderCourtesy(doc: jsPDF, data: FullTicketData, y: number): number {
   return y + 8;
 }
 
+async function svgToDataURL(svgString: string, size: number): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.src = url;
+  });
+}
+
+async function printDeliveryQR(doc: jsPDF, entregaToken: string, y: number): Promise<number> {
+  const deliveryUrl = `${window.location.origin}/entrega/${entregaToken}`;
+  y += 2;
+  dash(doc, y);
+  y += 4;
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ENTREGA PENDIENTE', 29, y, { align: 'center' });
+  y += 3;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.text('Escanee el QR para confirmar entrega', 29, y, { align: 'center' });
+  y += 4;
+
+  // Generate QR code as SVG and convert to image
+  try {
+    const svgStr = renderToString(
+      createElement(QRCodeSVG, { value: deliveryUrl, size: 200, level: 'M' })
+    );
+    const dataURL = await svgToDataURL(svgStr, 200);
+    const qrSize = 25;
+    const qrX = (58 - qrSize) / 2;
+    doc.addImage(dataURL, 'PNG', qrX, y, qrSize, qrSize);
+    y += qrSize + 2;
+  } catch {
+    // Fallback: just print the URL
+    doc.setFontSize(5);
+    doc.text(deliveryUrl.substring(0, 50), 29, y + 5, { align: 'center' });
+    y += 10;
+  }
+
+  doc.setFontSize(4);
+  doc.text(deliveryUrl.substring(0, 50), 29, y, { align: 'center' });
+  y += 4;
+  return y;
+}
+
 export async function printTicketWithTemplate(
   data: FullTicketData,
   config: TicketConfig,
   template: TicketTemplate = 'standard',
 ) {
-  const extraHeight = template === 'detailed' ? 40 : 0;
+  const hasQR = !!data.entregaToken;
+  const extraHeight = (template === 'detailed' ? 40 : 0) + (hasQR ? 45 : 0);
   const doc = new jsPDF({
     unit: 'mm',
     format: [58, 150 + data.items.length * 10 + extraHeight],
@@ -263,6 +323,11 @@ export async function printTicketWithTemplate(
     default:
       y = renderStandard(doc, data, y);
       break;
+  }
+
+  // Add delivery QR if token exists
+  if (data.entregaToken) {
+    y = await printDeliveryQR(doc, data.entregaToken, y);
   }
 
   y = printFooter(doc, config, y);

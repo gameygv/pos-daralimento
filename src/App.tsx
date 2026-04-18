@@ -30,6 +30,8 @@ import AlmacenesPage from '@/pages/AlmacenesPage';
 import CreditosPage from '@/pages/CreditosPage';
 import EtiquetasPage from '@/pages/EtiquetasPage';
 import OrdenesCompraPage from '@/pages/OrdenesCompraPage';
+import NotasPage from '@/pages/NotasPage';
+import EntregaPage from '@/pages/EntregaPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
 const queryClient = new QueryClient({
@@ -78,11 +80,13 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/entrega/:token" element={<EntregaPage />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="pos" element={<PosPage />} />
                   <Route element={<MainLayout />}>
                     {/* Accessible to all authenticated users */}
                     <Route index element={<DashboardPage />} />
+                    <Route path="notas" element={<NotasPage />} />
                     <Route path="clientes" element={<ClientesPage />} />
                     <Route path="corte" element={<CortePage />} />
 

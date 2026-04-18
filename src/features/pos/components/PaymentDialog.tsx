@@ -102,6 +102,7 @@ export function PaymentDialog({
   // Result
   const [resultFolio, setResultFolio] = useState<number>(0);
   const [resultFolioDisplay, setResultFolioDisplay] = useState<string>('');
+  const [resultEntregaToken, setResultEntregaToken] = useState<string>('');
   const [usedPayments, setUsedPayments] = useState<SplitPayment[]>([]);
 
   const total = totals.total;
@@ -126,6 +127,7 @@ export function PaymentDialog({
     setSplitAmount('');
     setResultFolio(0);
     setResultFolioDisplay('');
+    setResultEntregaToken('');
     setUsedPayments([]);
   }
 
@@ -234,6 +236,7 @@ export function PaymentDialog({
 
     setResultFolio(result.folio);
     setResultFolioDisplay(result.folioDisplay ?? '');
+    setResultEntregaToken(result.entregaToken ?? '');
     setUsedPayments(paymentsForRecord);
     setStep('success');
   }
@@ -278,6 +281,7 @@ export function PaymentDialog({
       total: totals.total,
       metodo_pago: primaryMethod,
       vendedor: seller,
+      entregaToken: resultEntregaToken || undefined,
     };
 
     try {
