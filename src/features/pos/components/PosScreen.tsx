@@ -22,6 +22,7 @@ import { useCart } from '../hooks/useCart';
 import { useAutoSession } from '@/features/cajas/hooks/useCajas';
 import type { PosProduct } from '../hooks/usePosProducts';
 import { useAlmacenPriceMap, useAlmacenStockMap, applyAlmacenPrices, findProductByBarcode } from '../hooks/usePosProducts';
+import { supabase } from '@/integrations/supabase/client';
 import { useSettings } from '@/features/settings/hooks/useSettings';
 import { useAlmacenes } from '@/features/almacenes/hooks/useAlmacenes';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
@@ -58,6 +59,28 @@ export function PosScreen() {
       }
     }
   }, [almacenes, selectedAlmacen]);
+
+  // Auto-select linked client when almacen changes
+  useEffect(() => {
+    if (!selectedAlmacen || almacenes.length === 0) return;
+    const alm = almacenes.find((a) => a.id === selectedAlmacen);
+    if (alm?.cliente_id) {
+      // Fetch client data
+      supabase
+        .from('clientes' as never)
+        .select('id, nombre, direccion, telefono, email')
+        .eq('id' as never, alm.cliente_id as never)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            const c = data as { id: string; nombre: string; direccion: string | null; telefono: string | null; email: string | null };
+            setSelectedClient({ id: c.id, nombre: c.nombre, direccion: c.direccion, telefono: c.telefono, email: c.email });
+          }
+        });
+    } else {
+      setSelectedClient(null);
+    }
+  }, [selectedAlmacen, almacenes, setSelectedClient]);
 
   // Barcode scanner
   useBarcodeScanner(async (barcode) => {

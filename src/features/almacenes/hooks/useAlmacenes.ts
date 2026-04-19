@@ -7,6 +7,7 @@ export interface AlmacenRow {
   descripcion: string | null;
   direccion: string | null;
   tienda_id: string | null;
+  cliente_id: string | null;
   is_active: boolean;
   is_default: boolean;
   created_at: string;
