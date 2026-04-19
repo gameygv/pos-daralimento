@@ -67,15 +67,18 @@ const TRANSFERENCIAS_KEY = ['transferencias'] as const;
 
 // ─── Almacenes CRUD ────────────────────────────────────
 
-export function useAlmacenes() {
+export function useAlmacenes(includeInactive = false) {
   return useQuery<AlmacenRow[]>({
-    queryKey: [...ALMACENES_KEY],
+    queryKey: [...ALMACENES_KEY, includeInactive],
     queryFn: async () => {
-      const { data, error } = (await supabase
+      let query = supabase
         .from('almacenes' as never)
         .select('*')
-        .eq('is_active' as never, true as never)
-        .order('nombre' as never)) as unknown as {
+        .order('nombre' as never);
+      if (!includeInactive) {
+        query = query.eq('is_active' as never, true as never);
+      }
+      const { data, error } = (await query) as unknown as {
         data: AlmacenRow[] | null;
         error: { message: string } | null;
       };

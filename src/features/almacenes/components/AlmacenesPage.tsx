@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Warehouse, Plus, Package, ArrowRightLeft, ScrollText, DollarSign, Save, Loader2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Warehouse, Plus, Package, ArrowRightLeft, ScrollText, DollarSign, Save, Loader2, Pencil, RefreshCw, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,9 +18,13 @@ import {
   useCreateTransferencia, useAlmacenPrecios, useUpsertAlmacenPrecio,
   type AlmacenRow, type KardexFilter,
 } from '../hooks/useAlmacenes';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { syncProductToWC } from '@/features/catalog/products/utils/syncProductToWC';
+import { logAction } from '@/features/logs/hooks/useLogs';
 
 type Tab = 'stock' | 'precios' | 'kardex' | 'transferir';
 
@@ -47,20 +51,31 @@ const TIPO_COLORS: Record<string, string> = {
 
 export function AlmacenesPage() {
   const { user } = useAuth();
-  const { data: almacenes = [], isLoading } = useAlmacenes();
+  const { data: almacenes = [], isLoading } = useAlmacenes(true);
   const createAlmacen = useCreateAlmacen();
   const updateAlmacen = useUpdateAlmacen();
   const adjustStock = useAdjustAlmacenStock();
   const createTransfer = useCreateTransferencia();
 
+  const queryClient = useQueryClient();
   const [selectedAlmacen, setSelectedAlmacen] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('stock');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showAdjustDialog, setShowAdjustDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newDir, setNewDir] = useState('');
   const [newClienteId, setNewClienteId] = useState('');
+  // Edit state
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editDir, setEditDir] = useState('');
+  const [editClienteId, setEditClienteId] = useState('');
+  // WC bulk sync
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+  const [syncProgress, setSyncProgress] = useState({ done: 0, total: 0 });
 
   // Fetch clientes for selector
   const { data: clientes = [] } = useQuery<Array<{ id: string; nombre: string }>>({
@@ -159,6 +174,74 @@ export function AlmacenesPage() {
     setTransferDest('');
   }
 
+  function openEditDialog(alm: AlmacenRow) {
+    setEditName(alm.nombre);
+    setEditDesc(alm.descripcion ?? '');
+    setEditDir(alm.direccion ?? '');
+    setEditClienteId(alm.cliente_id ?? '');
+    setShowEditDialog(true);
+  }
+
+  async function handleEditAlmacen() {
+    if (!selectedAlmacen || !editName.trim()) return;
+    await updateAlmacen.mutateAsync({
+      id: selectedAlmacen,
+      nombre: editName.trim(),
+      descripcion: editDesc.trim() || null,
+      direccion: editDir.trim() || null,
+      cliente_id: editClienteId && editClienteId !== '__none__' ? editClienteId : null,
+    } as { id: string } & Partial<AlmacenRow>);
+    toast.success('Punto de Venta actualizado');
+    setShowEditDialog(false);
+  }
+
+  async function handleToggleAlmacenActive(alm: AlmacenRow) {
+    if (alm.nombre === 'Página Web') return;
+    await updateAlmacen.mutateAsync({ id: alm.id, is_active: !alm.is_active } as { id: string } & Partial<AlmacenRow>);
+    toast.success(alm.is_active ? 'Punto de Venta desactivado' : 'Punto de Venta activado');
+  }
+
+  const handleSyncAllWC = useCallback(async () => {
+    setIsSyncingAll(true);
+    // Get "Página Web" almacén id
+    const paginaWeb = almacenes.find((a) => a.nombre === 'Página Web');
+    if (!paginaWeb) { toast.error('No se encontró el almacén "Página Web"'); setIsSyncingAll(false); return; }
+
+    // Get all products with precio_publico > 0 in Página Web
+    const { data: precios } = (await supabase
+      .from('almacen_precios' as never)
+      .select('product_id')
+      .eq('almacen_id' as never, paginaWeb.id as never)
+      .gt('precio_publico' as never, 0 as never)) as unknown as {
+      data: Array<{ product_id: string }> | null;
+    };
+    const productIds = (precios ?? []).map((p) => p.product_id);
+    if (productIds.length === 0) { toast.error('No hay productos vinculados a Página Web'); setIsSyncingAll(false); return; }
+
+    setSyncProgress({ done: 0, total: productIds.length });
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < productIds.length; i++) {
+      try {
+        const result = await syncProductToWC(productIds[i]);
+        if (result.success) successCount++;
+        else errorCount++;
+      } catch {
+        errorCount++;
+      }
+      setSyncProgress({ done: i + 1, total: productIds.length });
+    }
+
+    void queryClient.invalidateQueries({ queryKey: ['product-wc-map'] });
+    logAction('wc_sync_masivo', { total: productIds.length, exitosos: successCount, errores: errorCount });
+    toast.success(`Sincronizacion completada: ${successCount} exitosos, ${errorCount} errores`);
+    setIsSyncingAll(false);
+  }, [almacenes, queryClient]);
+
+  // Filter almacenes by active status
+  const visibleAlmacenes = showInactive ? almacenes : almacenes.filter((a) => a.is_active);
+
   if (isLoading) {
     return <div className="flex h-64 items-center justify-center text-muted-foreground">Cargando puntos de venta...</div>;
   }
@@ -170,35 +253,71 @@ export function AlmacenesPage() {
           <h1 className="text-2xl font-bold">Puntos de Venta</h1>
           <p className="text-muted-foreground">Gestiona inventario por ubicacion con trazabilidad Kardex</p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nuevo Punto de Venta
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <Switch id="show-inactive-alm" checked={showInactive} onCheckedChange={setShowInactive} />
+            <label htmlFor="show-inactive-alm" className="text-xs text-muted-foreground cursor-pointer">Inactivos</label>
+          </div>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nuevo Punto de Venta
+          </Button>
+        </div>
       </div>
 
       {/* Almacen cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {almacenes.map((a) => {
+        {visibleAlmacenes.map((a) => {
           const isSelected = selectedAlmacen === a.id;
+          const isPaginaWeb = a.nombre === 'Página Web';
           return (
             <Card
               key={a.id}
-              className={`cursor-pointer transition-all ${isSelected ? 'ring-2 ring-teal-500' : 'hover:shadow-md'}`}
+              className={`cursor-pointer transition-all ${!a.is_active ? 'opacity-50' : ''} ${isSelected ? 'ring-2 ring-teal-500' : 'hover:shadow-md'}`}
               onClick={() => setSelectedAlmacen(a.id)}
             >
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Warehouse className="h-4 w-4 text-teal-600" />
+                  {isPaginaWeb ? <Globe className="h-4 w-4 text-blue-600" /> : <Warehouse className="h-4 w-4 text-teal-600" />}
                   {a.nombre}
                   {a.is_default && (
                     <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-bold text-teal-700">
                       Principal
                     </span>
                   )}
+                  {!a.is_active && <Badge variant="secondary" className="text-[10px]">Inactivo</Badge>}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 {a.direccion && <p className="text-xs text-muted-foreground">{a.direccion}</p>}
                 {a.descripcion && <p className="text-xs text-muted-foreground">{a.descripcion}</p>}
+                <div className="flex items-center gap-1 pt-1" onClick={(e) => e.stopPropagation()}>
+                  {!isPaginaWeb && (
+                    <>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setSelectedAlmacen(a.id); openEditDialog(a); }}>
+                        <Pencil className="mr-1 h-3 w-3" /> Editar
+                      </Button>
+                      <Button
+                        variant="ghost" size="sm"
+                        className={`h-7 text-xs ${a.is_active ? 'text-red-600' : 'text-green-600'}`}
+                        onClick={() => handleToggleAlmacenActive(a)}
+                      >
+                        {a.is_active ? 'Desactivar' : 'Activar'}
+                      </Button>
+                    </>
+                  )}
+                  {isPaginaWeb && (
+                    <Button
+                      variant="outline" size="sm" className="h-7 text-xs"
+                      disabled={isSyncingAll}
+                      onClick={handleSyncAllWC}
+                    >
+                      <RefreshCw className={`mr-1 h-3 w-3 ${isSyncingAll ? 'animate-spin' : ''}`} />
+                      {isSyncingAll
+                        ? `Sincronizando ${syncProgress.done}/${syncProgress.total}...`
+                        : 'Sincronizar todo con WooCommerce'}
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );
@@ -625,6 +744,47 @@ export function AlmacenesPage() {
             <Button variant="outline" onClick={() => setShowAdjustDialog(false)}>Cancelar</Button>
             <Button onClick={handleAdjust} disabled={!adjVariant || adjustStock.isPending}>
               {adjustStock.isPending ? 'Ajustando...' : 'Aplicar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit punto de venta dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Punto de Venta</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nombre *</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div>
+              <Label>Descripcion</Label>
+              <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Opcional" />
+            </div>
+            <div>
+              <Label>Direccion</Label>
+              <Input value={editDir} onChange={(e) => setEditDir(e.target.value)} placeholder="Opcional" />
+            </div>
+            <div>
+              <Label>Cliente vinculado</Label>
+              <Select value={editClienteId || '__none__'} onValueChange={setEditClienteId}>
+                <SelectTrigger><SelectValue placeholder="Sin cliente vinculado" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin cliente vinculado</SelectItem>
+                  {clientes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancelar</Button>
+            <Button onClick={handleEditAlmacen} disabled={!editName.trim() || updateAlmacen.isPending}>
+              {updateAlmacen.isPending ? 'Guardando...' : 'Guardar'}
             </Button>
           </DialogFooter>
         </DialogContent>
