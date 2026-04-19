@@ -70,7 +70,7 @@ export function useAdvancedReport(fechaDesde: string, fechaHasta: string) {
       if (fechaDesde) notaQuery = notaQuery.gte('fecha' as never, fechaDesde as never);
       if (fechaHasta) notaQuery = notaQuery.lte('fecha' as never, fechaHasta as never);
 
-      const { data: notaData } = (await notaQuery) as unknown as {
+      const { data: notaData, error: notaErr } = (await notaQuery) as unknown as {
         data: Array<{
           id: string; fecha: string; hora: string; vendedor: string | null;
           folio: number; folio_display: string | null; cliente: string;
@@ -79,6 +79,8 @@ export function useAdvancedReport(fechaDesde: string, fechaHasta: string) {
           almacen_id: string | null;
         }> | null;
       };
+
+      if (notaErr) console.error('Nota query error:', notaErr);
 
       // Only include notas that don't already have vtatkt entries (avoid double-counting)
       const vtaFolios = new Set((vtaData ?? []).map((r) => r.folio));
