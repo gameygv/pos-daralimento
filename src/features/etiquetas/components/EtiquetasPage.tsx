@@ -23,8 +23,8 @@ import { toast } from 'sonner';
 
 // ─── Label size configs in mm ─────────────────────────────
 const LABEL_CONFIGS = {
-  medium: { w: 40, h: 25, qr: 10, fontSize: 2.8, name: 'Mediana (4×2.5 cm)', gap: 3 },
-  large:  { w: 50, h: 30, qr: 14, fontSize: 3.2, name: 'Grande (5×3 cm)', gap: 3 },
+  medium: { w: 40, h: 25, qr: 16, fontSize: 2, name: 'Mediana (4×2.5 cm)', gap: 3 },
+  large:  { w: 50, h: 30, qr: 22, fontSize: 2.3, name: 'Grande (5×3 cm)', gap: 3 },
 } as const;
 
 type LabelSize = keyof typeof LABEL_CONFIGS;
@@ -270,20 +270,19 @@ export function EtiquetasPage() {
     const weightMap = await fetchWeights([...new Set(selected.map((s) => s.id))]);
     const totalPages = Math.ceil(labels.length / grid.perPage);
 
-    // Pre-render QR codes as Image objects
+    // Pre-render QR codes as Image objects (data URI to avoid canvas security issues)
     const uniqueSkus = [...new Set(labels.map((l) => l.sku))];
     const qrImages = new Map<string, HTMLImageElement>();
     await Promise.all(
       uniqueSkus.map(
         (sku) =>
           new Promise<void>((resolve) => {
-            const svgStr = renderToStaticMarkup(<QRCodeSVG value={sku} size={200} level="M" />);
-            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
+            const svgStr = renderToStaticMarkup(<QRCodeSVG value={sku} size={400} level="M" />);
+            const dataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
             const img = new Image();
-            img.onload = () => { qrImages.set(sku, img); URL.revokeObjectURL(url); resolve(); };
-            img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-            img.src = url;
+            img.onload = () => { qrImages.set(sku, img); resolve(); };
+            img.onerror = () => { console.warn('QR load failed for', sku); resolve(); };
+            img.src = dataUri;
           }),
       ),
     );
