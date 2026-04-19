@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 
 // ─── Label size configs in mm ─────────────────────────────
 const LABEL_CONFIGS = {
+  small:  { w: 30, h: 20, qr: 13, fontSize: 1.4, name: 'Chica (3×2 cm)', gap: 3 },
   medium: { w: 40, h: 25, qr: 17, fontSize: 1.8, name: 'Mediana (4×2.5 cm)', gap: 3 },
   large:  { w: 50, h: 30, qr: 21, fontSize: 2, name: 'Grande (5×3 cm)', gap: 3 },
 } as const;
