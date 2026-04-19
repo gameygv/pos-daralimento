@@ -405,8 +405,10 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                       {almacenes.map((alm) => {
                         const existingPrecio = productPrecios.find((p) => p.almacen_id === alm.id);
                         const existingStock = productStocks.find((s) => s.almacen_id === alm.id);
+                        // Key includes data to force re-render when async data arrives
+                        const rowKey = `${alm.id}-${existingStock?.stock ?? 'x'}-${existingPrecio?.precio_publico ?? 'x'}`;
                         return (
-                          <tr key={alm.id}>
+                          <tr key={rowKey}>
                             <td className="px-3 py-1.5 font-medium text-xs">{alm.nombre}</td>
                             <td className="px-3 py-1.5 text-center">
                               <Input
