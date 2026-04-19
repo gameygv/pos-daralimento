@@ -8,9 +8,17 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAlmacenes } from '@/features/almacenes/hooks/useAlmacenes';
 
 interface QuickProductDialogProps {
   open: boolean;
@@ -19,50 +27,52 @@ interface QuickProductDialogProps {
 
 export function QuickProductDialog({ open, onOpenChange }: QuickProductDialogProps) {
   const queryClient = useQueryClient();
+  const { data: almacenes = [] } = useAlmacenes();
   const [name, setName] = useState('');
-  const [sku, setSku] = useState('');
-  const [barcode, setBarcode] = useState('');
-  const [price, setPrice] = useState('');
-  const [cost, setCost] = useState('');
+  const [precioPublico, setPrecioPublico] = useState('');
+  const [precioProveedor, setPrecioProveedor] = useState('');
+  const [almacenId, setAlmacenId] = useState('');
+  const [stock, setStock] = useState('1');
   const [saving, setSaving] = useState(false);
 
   function reset() {
     setName('');
-    setSku('');
-    setBarcode('');
-    setPrice('');
-    setCost('');
+    setPrecioPublico('');
+    setPrecioProveedor('');
+    setStock('1');
   }
 
   async function handleCreate() {
-    if (!name.trim() || !price) {
-      toast.error('Nombre y precio son requeridos');
+    if (!name.trim()) {
+      toast.error('El nombre es requerido');
+      return;
+    }
+    const pub = parseFloat(precioPublico) || 0;
+    const prov = parseFloat(precioProveedor) || 0;
+    if (pub <= 0 && prov <= 0) {
+      toast.error('Ingresa al menos un precio');
       return;
     }
 
     setSaving(true);
 
-    const slug = name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const generatedSku = `DAR-${Date.now().toString(36).toUpperCase()}`;
+    const basePrice = pub > 0 ? pub : prov;
 
-    const generatedSku = sku.trim() || `POS-${Date.now().toString(36).toUpperCase()}`;
-
-    // Create product
+    // 1. Create product
     const { data: product, error } = (await supabase
       .from('products' as never)
       .insert({
         name: name.trim(),
         slug: `${slug}-${Date.now()}`,
         sku: generatedSku,
-        barcode: barcode.trim() || null,
-        base_price: parseFloat(price),
-        product_type: 'simple',
+        base_price: basePrice,
+        precio_mayoreo: prov,
+        product_type: 'physical',
         is_active: true,
-        track_stock: false,
-        tax_rate: 0.16,
+        track_stock: true,
+        tax_rate: 0,
       } as never)
       .select('id')
       .single()) as unknown as {
@@ -70,27 +80,51 @@ export function QuickProductDialog({ open, onOpenChange }: QuickProductDialogPro
       error: { message: string } | null;
     };
 
-    if (error) {
-      toast.error(`Error: ${error.message}`);
+    if (error || !product) {
+      toast.error(`Error: ${error?.message ?? 'No se pudo crear'}`);
       setSaving(false);
       return;
     }
 
-    // Create default variant
-    if (product) {
+    // 2. Create default variant
+    const { data: variant } = (await supabase
+      .from('product_variants' as never)
+      .insert({
+        product_id: product.id,
+        sku: generatedSku,
+        stock: parseInt(stock) || 1,
+        is_active: true,
+      } as never)
+      .select('id')
+      .single()) as unknown as { data: { id: string } | null };
+
+    // 3. Set almacen stock + prices if almacen selected
+    const targetAlmacen = almacenId || almacenes[0]?.id;
+    if (targetAlmacen && variant) {
       await supabase
-        .from('product_variants' as never)
-        .insert({
-          product_id: product.id,
-          sku: generatedSku,
-          price_override: null,
-          stock: 0,
-          is_active: true,
-        } as never);
+        .from('almacen_stock' as never)
+        .upsert({
+          almacen_id: targetAlmacen,
+          variant_id: variant.id,
+          stock: parseInt(stock) || 1,
+        }, { onConflict: 'almacen_id,variant_id' } as never);
+
+      if (pub > 0 || prov > 0) {
+        await supabase
+          .from('almacen_precios' as never)
+          .upsert({
+            almacen_id: targetAlmacen,
+            product_id: product.id,
+            precio_publico: pub,
+            precio_proveedores: prov,
+          }, { onConflict: 'almacen_id,product_id' } as never);
+      }
     }
 
-    toast.success(`Producto "${name.trim()}" creado`);
+    toast.success(`"${name.trim()}" creado con ${stock} en inventario`);
     void queryClient.invalidateQueries({ queryKey: ['pos-products'] });
+    void queryClient.invalidateQueries({ queryKey: ['pos-almacen-stock-map'] });
+    void queryClient.invalidateQueries({ queryKey: ['pos-almacen-prices'] });
     reset();
     setSaving(false);
     onOpenChange(false);
@@ -102,7 +136,7 @@ export function QuickProductDialog({ open, onOpenChange }: QuickProductDialogPro
         <DialogHeader>
           <DialogTitle>Producto Rapido</DialogTitle>
           <DialogDescription>
-            Crea un producto directamente desde el POS
+            Crea un producto listo para vender
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -111,28 +145,28 @@ export function QuickProductDialog({ open, onOpenChange }: QuickProductDialogPro
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: Bowl Acai Grande"
+              placeholder="Ej: POLLO ENTERO 2.5kg"
               autoFocus
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium">Precio *</label>
+              <label className="mb-1 block text-sm font-medium">Precio Publico</label>
               <Input
                 type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                value={precioPublico}
+                onChange={(e) => setPrecioPublico(e.target.value)}
                 placeholder="0.00"
                 min={0}
                 step={0.01}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Costo</label>
+              <label className="mb-1 block text-sm font-medium">Precio Proveedor</label>
               <Input
                 type="number"
-                value={cost}
-                onChange={(e) => setCost(e.target.value)}
+                value={precioProveedor}
+                onChange={(e) => setPrecioProveedor(e.target.value)}
                 placeholder="0.00"
                 min={0}
                 step={0.01}
@@ -141,26 +175,30 @@ export function QuickProductDialog({ open, onOpenChange }: QuickProductDialogPro
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium">SKU</label>
-              <Input
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="Auto-generado"
-              />
+              <label className="mb-1 block text-sm font-medium">Punto de Venta</label>
+              <Select value={almacenId} onValueChange={setAlmacenId}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                <SelectContent>
+                  {almacenes.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Barcode</label>
+              <label className="mb-1 block text-sm font-medium">Cantidad</label>
               <Input
-                value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
-                placeholder="Opcional"
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+                min={1}
               />
             </div>
           </div>
           <Button
-            className="h-11 w-full"
+            className="h-11 w-full bg-teal-600 hover:bg-teal-700"
             onClick={handleCreate}
-            disabled={saving || !name.trim() || !price}
+            disabled={saving || !name.trim()}
           >
             {saving ? 'Creando...' : 'Crear Producto'}
           </Button>
