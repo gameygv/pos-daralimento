@@ -77,7 +77,7 @@ export function useAlmacenStockMap(almacenId: string | null) {
   });
 }
 
-/** Apply almacén prices over PosProduct array */
+/** Apply almacén prices over PosProduct array — almacén price always wins */
 export function applyAlmacenPrices(
   products: PosProduct[],
   priceMap: Map<string, { precio_publico: number; precio_proveedores: number }> | undefined,
@@ -85,11 +85,11 @@ export function applyAlmacenPrices(
   if (!priceMap || priceMap.size === 0) return products;
   return products.map((p) => {
     const override = priceMap.get(p.id);
-    if (!override) return p;
+    if (!override) return { ...p, base_price: 0, precio_mayoreo: 0 };
     return {
       ...p,
-      base_price: override.precio_publico > 0 ? override.precio_publico : p.base_price,
-      precio_mayoreo: override.precio_proveedores > 0 ? override.precio_proveedores : p.precio_mayoreo,
+      base_price: override.precio_publico,
+      precio_mayoreo: override.precio_proveedores,
     };
   });
 }
