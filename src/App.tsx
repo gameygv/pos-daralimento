@@ -83,7 +83,6 @@ export default function App() {
                     <Route index element={<DashboardPage />} />
                     <Route path="notas" element={<NotasPage />} />
                     <Route path="clientes" element={<ClientesPage />} />
-                    <Route path="corte" element={<CortePage />} />
 
                     {/* Permission-gated routes */}
                     <Route element={<PermissionRoute requires="productos" />}>
