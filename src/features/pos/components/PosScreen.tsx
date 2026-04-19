@@ -246,6 +246,7 @@ export function PosScreen() {
         clienteId={selectedClient?.id ?? null}
         cajaId={session?.caja_id ?? null}
         cajaSessionId={session?.id ?? null}
+        almacenId={selectedAlmacen || null}
         onPaymentComplete={() => {
           clearCart();
           playSound('payment');

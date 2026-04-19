@@ -17,6 +17,7 @@ export interface AdvancedReportRow {
   metodo_pago: string;
   caja_id: string | null;
   source: 'venta' | 'nota';
+  almacen_id: string | null;
   pagado: number;
   total: number;
   saldo: number;
@@ -51,6 +52,7 @@ export function useAdvancedReport(fechaDesde: string, fechaHasta: string) {
         results.push({
           ...r,
           source: 'venta',
+          almacen_id: null,
           pagado: r.prec * r.can,
           total: r.prec * r.can,
           saldo: 0,
@@ -61,7 +63,7 @@ export function useAdvancedReport(fechaDesde: string, fechaHasta: string) {
       // 2. Fetch from notas (imported + POS notes)
       let notaQuery = supabase
         .from('notas' as never)
-        .select('id, fecha, hora, vendedor, folio, folio_display, cliente, total, pagado, metodo_pago, pago_status, entrega_status, notas_pago')
+        .select('id, fecha, hora, vendedor, folio, folio_display, cliente, total, pagado, metodo_pago, pago_status, entrega_status, notas_pago, almacen_id')
         .order('fecha' as never, { ascending: false })
         .limit(5000);
 
@@ -74,6 +76,7 @@ export function useAdvancedReport(fechaDesde: string, fechaHasta: string) {
           folio: number; folio_display: string | null; cliente: string;
           total: number; pagado: number; metodo_pago: string;
           pago_status: string; entrega_status: string; notas_pago: string | null;
+          almacen_id: string | null;
         }> | null;
       };
 
@@ -100,6 +103,7 @@ export function useAdvancedReport(fechaDesde: string, fechaHasta: string) {
           metodo_pago: n.metodo_pago,
           caja_id: null,
           source: 'nota',
+          almacen_id: n.almacen_id ?? null,
           pagado: n.pagado,
           total: n.total,
           saldo: n.total - n.pagado,

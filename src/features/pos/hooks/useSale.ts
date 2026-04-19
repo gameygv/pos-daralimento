@@ -20,6 +20,7 @@ interface CreateSaleParams {
   globalDiscountPct?: number;
   splitPayments?: SplitPaymentEntry[];
   paymentNote?: string;
+  almacenId?: string | null;
 }
 
 interface SaleResult {
@@ -35,7 +36,7 @@ export function useCreateSale() {
   const queryClient = useQueryClient();
 
   return useMutation<SaleResult, Error, CreateSaleParams>({
-    mutationFn: async ({ items, metodoPago, seller, cliente, cajaId, cajaSessionId, globalDiscountPct = 0, splitPayments, paymentNote }) => {
+    mutationFn: async ({ items, metodoPago, seller, cliente, cajaId, cajaSessionId, globalDiscountPct = 0, splitPayments, paymentNote, almacenId }) => {
       let nextFolio: number;
       let folioDisplay: string;
 
@@ -189,6 +190,7 @@ export function useCreateSale() {
           pago_status: 'pendiente',
           entrega_status: 'sin_entregar',
           ...(paymentNote ? { notas_pago: paymentNote } : {}),
+          ...(almacenId ? { almacen_id: almacenId } : {}),
           ...(cajaId ? { caja_id: cajaId } : {}),
           ...(cajaSessionId ? { caja_session_id: cajaSessionId } : {}),
         } as never)

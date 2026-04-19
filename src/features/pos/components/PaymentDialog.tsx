@@ -66,6 +66,7 @@ interface PaymentDialogProps {
   clienteId?: string | null;
   cajaId?: string | null;
   cajaSessionId?: string | null;
+  almacenId?: string | null;
 }
 
 type DialogStep = 'payment' | 'success';
@@ -82,6 +83,7 @@ export function PaymentDialog({
   clienteId,
   cajaId,
   cajaSessionId,
+  almacenId,
 }: PaymentDialogProps) {
   const { user } = useAuth();
   const createSale = useCreateSale();
@@ -227,6 +229,7 @@ export function PaymentDialog({
       cliente,
       cajaId,
       cajaSessionId,
+      almacenId,
       globalDiscountPct,
       splitPayments: splitMode ? splits.map((s) => ({ method: s.method, amount: s.amount })) : undefined,
       paymentNote: paymentNotes.length > 0 ? paymentNotes.join(' | ') : undefined,

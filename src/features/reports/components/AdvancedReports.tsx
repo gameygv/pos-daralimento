@@ -36,6 +36,7 @@ import {
   Legend,
 } from 'recharts';
 import { useAdvancedReport } from '../hooks/useAdvancedReport';
+import { useAlmacenes } from '@/features/almacenes/hooks/useAlmacenes';
 import {
   Select,
   SelectContent,
@@ -76,8 +77,10 @@ export function AdvancedReports() {
   const [clienteFilter, setClienteFilter] = useState<string>('all');
   const [metodoPagoFilter, setMetodoPagoFilter] = useState<string>('all');
   const [entregaFilter, setEntregaFilter] = useState<string>('all');
+  const [almacenFilter, setAlmacenFilter] = useState<string>('all');
 
   const { data: rows = [], isLoading } = useAdvancedReport(fechaDesde, fechaHasta);
+  const { data: almacenes = [] } = useAlmacenes();
 
   // Extract unique clients for filters
   const uniqueClientes = useMemo(() => {
@@ -91,6 +94,7 @@ export function AdvancedReports() {
     return rows.filter((r) => {
       if (r.status === 'CANCELADO' || r.status === 'DEVUELTO') return false;
       if (clienteFilter !== 'all' && r.cliente !== clienteFilter) return false;
+      if (almacenFilter !== 'all' && r.almacen_id !== almacenFilter) return false;
       if (entregaFilter !== 'all' && r.entrega_status !== entregaFilter) return false;
       if (metodoPagoFilter !== 'all') {
         const raw = r.metodo_pago;
@@ -239,6 +243,18 @@ export function AdvancedReports() {
               <SelectItem value="all">Todos los clientes</SelectItem>
               {uniqueClientes.map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Punto de Venta</label>
+          <Select value={almacenFilter} onValueChange={setAlmacenFilter}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {almacenes.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>
               ))}
             </SelectContent>
           </Select>
