@@ -17,20 +17,13 @@ import PosPage from '@/pages/PosPage';
 import InventarioPage from '@/pages/InventarioPage';
 import ClientesPage from '@/pages/ClientesPage';
 import ReportesPage from '@/pages/ReportesPage';
-import CortePage from '@/pages/CortePage';
 import CxCPage from '@/pages/CxCPage';
 import GastosPage from '@/pages/GastosPage';
 import UsuariosPage from '@/pages/UsuariosPage';
 import ConfiguracionPage from '@/pages/ConfiguracionPage';
 import LogsPage from '@/pages/LogsPage';
-import CajasPage from '@/pages/CajasPage';
-import DevolucionesPage from '@/pages/DevolucionesPage';
-import CuponesPage from '@/pages/CuponesPage';
-import TiendasPage from '@/pages/TiendasPage';
 import AlmacenesPage from '@/pages/AlmacenesPage';
-import CreditosPage from '@/pages/CreditosPage';
 import EtiquetasPage from '@/pages/EtiquetasPage';
-import OrdenesCompraPage from '@/pages/OrdenesCompraPage';
 import NotasPage from '@/pages/NotasPage';
 import EntregaPage from '@/pages/EntregaPage';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -108,29 +101,14 @@ export default function App() {
                     <Route element={<PermissionRoute requires="reportes" />}>
                       <Route path="reportes" element={<ReportesPage />} />
                     </Route>
-                    <Route element={<PermissionRoute requires="tiendas" />}>
-                      <Route path="tiendas" element={<TiendasPage />} />
-                    </Route>
-                    <Route element={<PermissionRoute requires="cupones" />}>
-                      <Route path="cupones" element={<CuponesPage />} />
-                    </Route>
-                    <Route element={<PermissionRoute requires="devoluciones" />}>
-                      <Route path="devoluciones" element={<DevolucionesPage />} />
-                    </Route>
                     <Route element={<PermissionRoute requires="cxc" />}>
                       <Route path="cxc" element={<CxCPage />} />
-                    </Route>
-                    <Route element={<PermissionRoute requires="creditos" />}>
-                      <Route path="creditos" element={<CreditosPage />} />
                     </Route>
                     <Route element={<PermissionRoute requires="gastos" />}>
                       <Route path="gastos" element={<GastosPage />} />
                     </Route>
                     <Route element={<PermissionRoute requires="usuarios" />}>
                       <Route path="usuarios" element={<UsuariosPage />} />
-                    </Route>
-                    <Route element={<PermissionRoute requires="cajas" />}>
-                      <Route path="cajas" element={<CajasPage />} />
                     </Route>
                     <Route element={<PermissionRoute requires="configuracion" />}>
                       <Route path="configuracion" element={<ConfiguracionPage />} />
@@ -140,9 +118,6 @@ export default function App() {
                     </Route>
                     <Route element={<PermissionRoute requires="etiquetas" />}>
                       <Route path="etiquetas" element={<EtiquetasPage />} />
-                    </Route>
-                    <Route element={<PermissionRoute requires="inventario" />}>
-                      <Route path="ordenes-compra" element={<OrdenesCompraPage />} />
                     </Route>
                   </Route>
                 </Route>

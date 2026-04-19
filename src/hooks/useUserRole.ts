@@ -19,7 +19,7 @@ export function useUserRole() {
         .from('vende' as never)
         .select('role')
         .eq('codven' as never, user.id as never)
-        .single()) as unknown as {
+        .maybeSingle()) as unknown as {
         data: { role: string } | null;
       };
       return (data?.role as string) ?? 'vendedor';

@@ -44,7 +44,7 @@ export const printTicket = async (ticketData: TicketData) => {
     const { data: config } = (await supabase
       .from('pvcntl' as never)
       .select('*')
-      .single()) as unknown as { data: Record<string, unknown> | null };
+      .maybeSingle()) as unknown as { data: Record<string, unknown> | null };
 
     const doc = new jsPDF({
       unit: "mm",
