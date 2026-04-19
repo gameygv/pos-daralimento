@@ -64,6 +64,7 @@ export interface CatalogDatabase {
           base_price: number;
           precio_mayoreo: number;
           cost: number | null;
+          weight_grams: number | null;
           tax_rate: number;
           is_active: boolean;
           track_stock: boolean;
@@ -84,6 +85,7 @@ export interface CatalogDatabase {
           base_price: number;
           precio_mayoreo?: number;
           cost?: number | null;
+          weight_grams?: number | null;
           tax_rate?: number;
           is_active?: boolean;
           track_stock?: boolean;
@@ -104,6 +106,7 @@ export interface CatalogDatabase {
           base_price?: number;
           precio_mayoreo?: number;
           cost?: number | null;
+          weight_grams?: number | null;
           tax_rate?: number;
           is_active?: boolean;
           track_stock?: boolean;

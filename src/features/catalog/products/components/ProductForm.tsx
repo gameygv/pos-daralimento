@@ -100,6 +100,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
       base_price: 0,
       precio_mayoreo: 0,
       cost: null,
+      weight_grams: null,
       tax_rate: 0.16,
       description: null,
       is_active: true,
@@ -123,6 +124,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
           base_price: (existingProduct as Record<string, unknown>).base_price as number,
           precio_mayoreo: ((existingProduct as Record<string, unknown>).precio_mayoreo as number) ?? 0,
           cost: ((existingProduct as Record<string, unknown>).cost as number | null) ?? null,
+          weight_grams: ((existingProduct as Record<string, unknown>).weight_grams as number | null) ?? null,
           tax_rate: (existingProduct as Record<string, unknown>).tax_rate as number,
           description: ((existingProduct as Record<string, unknown>).description as string | null) ?? null,
           is_active: (existingProduct as Record<string, unknown>).is_active as boolean,
@@ -141,6 +143,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
           base_price: 0,
           precio_mayoreo: 0,
           cost: null,
+          weight_grams: null,
           tax_rate: 0.16,
           description: null,
           is_active: true,
@@ -392,16 +395,29 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 )}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="cost">Costo</Label>
-              <Input
-                id="cost"
-                type="number"
-                step="0.01"
-                min="0"
-                {...form.register('cost')}
-                placeholder="Opcional"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cost">Costo</Label>
+                <Input
+                  id="cost"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...form.register('cost')}
+                  placeholder="Opcional"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="weight_grams">Peso (gramos)</Label>
+                <Input
+                  id="weight_grams"
+                  type="number"
+                  step="1"
+                  min="0"
+                  {...form.register('weight_grams')}
+                  placeholder="Ej: 500"
+                />
+              </div>
             </div>
           </div>
 

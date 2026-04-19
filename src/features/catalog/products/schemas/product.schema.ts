@@ -29,6 +29,7 @@ export const productFormSchema = z.object({
   base_price: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
   precio_mayoreo: z.coerce.number().min(0).default(0),
   cost: z.coerce.number().min(0).nullable().default(null),
+  weight_grams: z.coerce.number().min(0).nullable().default(null),
   tax_rate: z.coerce.number().min(0).max(1).default(0.16),
   description: z.string().max(2000).nullable().default(null),
   is_active: z.boolean().default(true),
