@@ -26,6 +26,8 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { toast } from 'sonner';
 import { logAction } from '@/features/logs/hooks/useLogs';
 import { syncStockToWC } from '@/features/almacenes/utils/syncStockToWC';
+import { syncProductToWC } from '../utils/syncProductToWC';
+import { RefreshCw } from 'lucide-react';
 
 function useProductAlmacenStock(productId: string | null) {
   return useQuery<Array<{ almacen_id: string; stock: number }>>({
@@ -87,6 +89,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
   const adjustStock = useAdjustAlmacenStock();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
+  const [isSyncingWC, setIsSyncingWC] = useState(false);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -255,7 +258,34 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>{isEditing ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
+            {isEditing && productId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isSyncingWC}
+                onClick={async () => {
+                  setIsSyncingWC(true);
+                  try {
+                    const result = await syncProductToWC(productId);
+                    if (result.success) {
+                      toast.success(result.message);
+                    } else {
+                      toast.error(result.message);
+                    }
+                  } catch (err) {
+                    toast.error(`Error: ${(err as Error).message}`);
+                  }
+                  setIsSyncingWC(false);
+                }}
+              >
+                <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isSyncingWC ? 'animate-spin' : ''}`} />
+                {isSyncingWC ? 'Sincronizando...' : 'Sincronizar con WooCommerce'}
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
