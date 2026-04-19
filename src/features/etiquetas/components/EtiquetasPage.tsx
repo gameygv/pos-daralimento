@@ -15,10 +15,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Package } from 'lucide-react';
 import { usePosProducts, type PosProduct } from '@/features/pos/hooks/usePosProducts';
 import { useAlmacenes } from '@/features/almacenes/hooks/useAlmacenes';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useProductStock } from '@/features/inventory/hooks/useInventory';
 
 function formatPrice(n: number) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
@@ -57,6 +59,7 @@ export function EtiquetasPage() {
 
   const { data: products = [] } = usePosProducts({ query: search || null });
   const { data: almacenes = [] } = useAlmacenes();
+  const { data: allProductStock = [] } = useProductStock();
 
   // Query kardex entries (entradas) in date range + almacén, grouped by product with quantities
   const { data: inventoryProducts = [] } = useQuery<Array<{ id: string; name: string; sku: string; base_price: number; almacen_nombre: string; qty: number }>>({
@@ -148,6 +151,39 @@ export function EtiquetasPage() {
       }
     }
     setSelected((prev) => [...prev, ...newSelected]);
+  }
+
+  function selectAllWithStock() {
+    const withStock = allProductStock.filter((p) => p.stock > 0);
+    const newSelected: SelectedProduct[] = [];
+    for (const p of withStock) {
+      if (!selected.find((s) => s.id === p.id)) {
+        newSelected.push({
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          price: 0, // will be enriched below
+          quantity: 1,
+        });
+      }
+    }
+    // Enrich prices from products list if available
+    if (newSelected.length > 0) {
+      supabase
+        .from('products' as never)
+        .select('id, base_price')
+        .in('id' as never, newSelected.map((p) => p.id) as never)
+        .then(({ data }) => {
+          const priceMap = new Map<string, number>();
+          for (const p of (data ?? []) as Array<{ id: string; base_price: number }>) {
+            priceMap.set(p.id, p.base_price);
+          }
+          setSelected((prev) => [
+            ...prev,
+            ...newSelected.map((p) => ({ ...p, price: priceMap.get(p.id) ?? 0 })),
+          ]);
+        });
+    }
   }
 
   function updateQuantity(id: string, qty: number) {
@@ -346,6 +382,24 @@ export function EtiquetasPage() {
             ) : (
               /* Filtro por fecha de alta + almacén */
               <>
+                {/* Botón para seleccionar todo el inventario actual */}
+                <div className="rounded-lg border border-dashed p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Package className="h-4 w-4" />
+                      <span>{allProductStock.filter((p) => p.stock > 0).length} productos con existencia</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={selectAllWithStock}
+                    >
+                      <Check className="mr-1 h-3 w-3" />
+                      Seleccionar todo el inventario
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">Desde</Label>
