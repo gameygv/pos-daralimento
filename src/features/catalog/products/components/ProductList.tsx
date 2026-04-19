@@ -1,20 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Pencil, Plus, Package, ChevronLeft, ChevronRight, X, ImageIcon, Calculator } from 'lucide-react';
+import { Pencil, Plus, Package, ChevronLeft, ChevronRight, X, ImageIcon, Calculator, RefreshCw, Globe, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useProducts, useToggleProductActive } from '../hooks/useProducts';
 import type { StockFilter } from '../hooks/useProducts';
 import { useCategoryList } from '@/features/catalog/categories';
 import type { ProductSearchResult } from '@/integrations/supabase/catalog-types';
 import { ProductForm } from './ProductForm';
 import { PriceCalculatorDialog } from './PriceCalculatorDialog';
+import { syncProductToWC } from '../utils/syncProductToWC';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const ALL_VALUE = '__all__';
 
@@ -54,6 +62,55 @@ export function ProductList() {
   });
   const { data: categories = [] } = useCategoryList();
   const toggleActive = useToggleProductActive();
+  const queryClient = useQueryClient();
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+
+  // Fetch "Página Web" almacén prices (to know which products are linked)
+  const { data: paginaWebPrecios = [] } = useQuery<Array<{ product_id: string; precio_publico: number }>>({
+    queryKey: ['pagina-web-precios'],
+    queryFn: async () => {
+      const { data: alm } = (await supabase
+        .from('almacenes' as never).select('id').eq('nombre' as never, 'Página Web' as never).single()) as unknown as { data: { id: string } | null };
+      if (!alm) return [];
+      const { data } = (await supabase
+        .from('almacen_precios' as never).select('product_id, precio_publico').eq('almacen_id' as never, alm.id as never)) as unknown as {
+        data: Array<{ product_id: string; precio_publico: number }> | null;
+      };
+      return (data ?? []).filter((p) => p.precio_publico > 0);
+    },
+  });
+
+  // Fetch WC mappings
+  const { data: wcMappings = [] } = useQuery<Array<{ product_id: string; wc_product_id: number; synced_at: string | null }>>({
+    queryKey: ['product-wc-map'],
+    queryFn: async () => {
+      const { data } = (await supabase
+        .from('product_wc_map' as never).select('product_id, wc_product_id, synced_at')) as unknown as {
+        data: Array<{ product_id: string; wc_product_id: number; synced_at: string | null }> | null;
+      };
+      return data ?? [];
+    },
+  });
+
+  // Build lookup maps
+  const linkedProducts = new Set(paginaWebPrecios.map((p) => p.product_id));
+  const wcMapByProduct = new Map(wcMappings.map((m) => [m.product_id, m]));
+
+  async function handleSyncWC(productId: string) {
+    setSyncingId(productId);
+    try {
+      const result = await syncProductToWC(productId);
+      if (result.success) {
+        toast.success(result.message);
+        void queryClient.invalidateQueries({ queryKey: ['product-wc-map'] });
+      } else {
+        toast.error(result.message);
+      }
+    } catch (err) {
+      toast.error(`Error: ${(err as Error).message}`);
+    }
+    setSyncingId(null);
+  }
 
   const products = data?.products ?? [];
   const hasNextPage = data?.hasNextPage ?? false;
@@ -162,6 +219,7 @@ export function ProductList() {
                 <TableHead>Categoría</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
                 <TableHead>Activo</TableHead>
+                <TableHead className="text-center">WC</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -200,6 +258,58 @@ export function ProductList() {
                         }
                         aria-label={`${product.is_active ? 'Desactivar' : 'Activar'} ${product.name}`}
                       />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {linkedProducts.has(product.id) ? (() => {
+                        const wcMap = wcMapByProduct.get(product.id);
+                        const isSyncing = syncingId === product.id;
+                        return (
+                          <TooltipProvider>
+                            <div className="flex items-center justify-center gap-1">
+                              {wcMap ? (
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant="secondary" className="bg-green-100 text-green-700 text-[10px] px-1.5">
+                                      <Check className="mr-0.5 h-3 w-3" />
+                                      WC
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>WC ID: {wcMap.wc_product_id}</p>
+                                    {wcMap.synced_at && (
+                                      <p className="text-xs text-muted-foreground">
+                                        Sync: {new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(wcMap.synced_at))}
+                                      </p>
+                                    )}
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-[10px] px-1.5">
+                                      <AlertCircle className="mr-0.5 h-3 w-3" />
+                                      WC
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>No sincronizado con WooCommerce</TooltipContent>
+                                </Tooltip>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                disabled={isSyncing}
+                                title="Sincronizar con WooCommerce"
+                                onClick={() => handleSyncWC(product.id)}
+                              >
+                                <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                              </Button>
+                            </div>
+                          </TooltipProvider>
+                        );
+                      })() : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-0.5">
