@@ -43,71 +43,74 @@ export function EtiquetasPage() {
 
   // Filtro por rango de fechas y almacén
   const [filterMode, setFilterMode] = useState<'search' | 'inventory'>('search');
-  const [fechaDesde, setFechaDesde] = useState('');
-  const [fechaHasta, setFechaHasta] = useState('');
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(); todayEnd.setHours(23, 59, 0, 0);
+  const toLocalISO = (d: Date) => {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const [fechaDesde, setFechaDesde] = useState(toLocalISO(todayStart));
+  const [fechaHasta, setFechaHasta] = useState(toLocalISO(todayEnd));
   const [almacenFilter, setAlmacenFilter] = useState<string>(ALL_VALUE);
 
   const { data: products = [] } = usePosProducts({ query: search || null });
   const { data: almacenes = [] } = useAlmacenes();
 
-  // Query products by creation date + almacén stock
-  const { data: inventoryProducts = [] } = useQuery<Array<{ id: string; name: string; sku: string; base_price: number; almacen_nombre: string }>>({
+  // Query kardex entries (entradas) in date range + almacén, grouped by product with quantities
+  const { data: inventoryProducts = [] } = useQuery<Array<{ id: string; name: string; sku: string; base_price: number; almacen_nombre: string; qty: number }>>({
     queryKey: ['etiquetas-inventory', fechaDesde, fechaHasta, almacenFilter],
     queryFn: async () => {
       if (!fechaDesde && !fechaHasta) return [];
 
-      // Build date range for products.created_at
+      // Query kardex for entrada movements in the date range
       let query = supabase
-        .from('products' as never)
-        .select('id, name, sku, base_price, created_at')
-        .eq('is_active' as never, true as never)
-        .order('name' as never);
+        .from('kardex' as never)
+        .select('product_id, cantidad, almacen_id, created_at')
+        .in('tipo' as never, ['entrada', 'ajuste'] as never)
+        .order('created_at' as never, { ascending: false });
 
-      if (fechaDesde) {
-        query = query.gte('created_at' as never, fechaDesde as never);
-      }
-      if (fechaHasta) {
-        query = query.lte('created_at' as never, fechaHasta as never);
-      }
+      if (fechaDesde) query = query.gte('created_at' as never, fechaDesde as never);
+      if (fechaHasta) query = query.lte('created_at' as never, fechaHasta as never);
+      if (almacenFilter !== ALL_VALUE) query = query.eq('almacen_id' as never, almacenFilter as never);
 
-      const { data: prods, error } = (await query) as unknown as {
-        data: Array<{ id: string; name: string; sku: string; base_price: number; created_at: string }> | null;
+      const { data: kardexRows, error } = (await query) as unknown as {
+        data: Array<{ product_id: string; cantidad: number; almacen_id: string }> | null;
         error: { message: string } | null;
       };
       if (error) throw new Error(error.message);
-      if (!prods || prods.length === 0) return [];
+      if (!kardexRows || kardexRows.length === 0) return [];
 
-      // If almacén filter is set, only include products that have stock in that almacén
-      if (almacenFilter !== ALL_VALUE) {
-        const productIds = prods.map((p) => p.id);
-        const { data: variantData } = (await supabase
-          .from('product_variants' as never)
-          .select('id, product_id')
-          .in('product_id' as never, productIds as never)) as unknown as {
-          data: Array<{ id: string; product_id: string }> | null;
-        };
-        const variantIds = (variantData ?? []).map((v) => v.id);
-        const variantToProduct = new Map((variantData ?? []).map((v) => [v.id, v.product_id]));
-
-        const { data: stockData } = (await supabase
-          .from('almacen_stock' as never)
-          .select('variant_id, stock')
-          .eq('almacen_id' as never, almacenFilter as never)
-          .in('variant_id' as never, variantIds as never)
-          .gt('stock' as never, 0 as never)) as unknown as {
-          data: Array<{ variant_id: string; stock: number }> | null;
-        };
-
-        const productIdsWithStock = new Set((stockData ?? []).map((s) => variantToProduct.get(s.variant_id)).filter(Boolean));
-        const almName = almacenes.find((a) => a.id === almacenFilter)?.nombre ?? '';
-        return prods
-          .filter((p) => productIdsWithStock.has(p.id))
-          .map((p) => ({ ...p, almacen_nombre: almName }));
+      // Group by product_id, sum quantities
+      const byProduct = new Map<string, { qty: number; almacen_id: string }>();
+      for (const k of kardexRows) {
+        const existing = byProduct.get(k.product_id);
+        if (existing) {
+          existing.qty += k.cantidad;
+        } else {
+          byProduct.set(k.product_id, { qty: k.cantidad, almacen_id: k.almacen_id });
+        }
       }
 
-      return prods.map((p) => ({ ...p, almacen_nombre: '' }));
+      // Fetch product details
+      const productIds = [...byProduct.keys()];
+      const { data: prods } = (await supabase
+        .from('products' as never)
+        .select('id, name, sku, base_price')
+        .in('id' as never, productIds as never)) as unknown as {
+        data: Array<{ id: string; name: string; sku: string; base_price: number }> | null;
+      };
+
+      const almName = almacenFilter !== ALL_VALUE
+        ? almacenes.find((a) => a.id === almacenFilter)?.nombre ?? ''
+        : '';
+
+      return (prods ?? []).map((p) => ({
+        ...p,
+        almacen_nombre: almName,
+        qty: byProduct.get(p.id)?.qty ?? 1,
+      }));
     },
-    enabled: filterMode === 'inventory' && !!(fechaDesde || fechaHasta),
+    enabled: filterMode === 'inventory',
   });
 
   function toggleProduct(p: PosProduct | { id: string; name: string; sku: string }) {
@@ -137,7 +140,7 @@ export function EtiquetasPage() {
           name: p.name,
           sku: p.sku,
           price: p.base_price ?? 0,
-          quantity: 1,
+          quantity: p.qty ?? 1,
         });
       }
     }
@@ -403,7 +406,13 @@ export function EtiquetasPage() {
                         return (
                           <button
                             key={p.id}
-                            onClick={() => toggleProduct({ ...p, base_price: p.base_price ?? 0 } as PosProduct)}
+                            onClick={() => {
+                              setSelected((prev) => {
+                                const exists = prev.find((s) => s.id === p.id);
+                                if (exists) return prev.filter((s) => s.id !== p.id);
+                                return [...prev, { id: p.id, name: p.name, sku: p.sku, price: p.base_price ?? 0, quantity: p.qty ?? 1 }];
+                              });
+                            }}
                             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                               isSelected ? 'bg-teal-50 text-teal-700' : 'hover:bg-muted/50'
                             }`}
@@ -412,7 +421,7 @@ export function EtiquetasPage() {
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-medium">{p.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {p.sku} — {formatPrice(p.base_price)}
+                                {p.qty} etiqueta{p.qty !== 1 ? 's' : ''} — {formatPrice(p.base_price)}
                                 {p.almacen_nombre ? ` · ${p.almacen_nombre}` : ''}
                               </p>
                             </div>
