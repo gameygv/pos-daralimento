@@ -23,8 +23,8 @@ import { toast } from 'sonner';
 
 // ─── Label size configs in mm ─────────────────────────────
 const LABEL_CONFIGS = {
-  medium: { w: 40, h: 25, qr: 16, fontSize: 2, name: 'Mediana (4×2.5 cm)', gap: 3 },
-  large:  { w: 50, h: 30, qr: 22, fontSize: 2.3, name: 'Grande (5×3 cm)', gap: 3 },
+  medium: { w: 40, h: 25, qr: 17, fontSize: 1.8, name: 'Mediana (4×2.5 cm)', gap: 3 },
+  large:  { w: 50, h: 30, qr: 21, fontSize: 2, name: 'Grande (5×3 cm)', gap: 3 },
 } as const;
 
 type LabelSize = keyof typeof LABEL_CONFIGS;
@@ -194,98 +194,120 @@ export function EtiquetasPage() {
     setSelected((prev) => prev.map((s) => (s.id === id ? { ...s, quantity: Math.max(1, qty) } : s)));
   }
 
-  // ─── Print (HTML for EPSON) ───────────────────────────
+  // ─── Render QR to a canvas (reliable, no SVG-to-Image issues) ───
+
+  function renderQrToCanvas(sku: string, sizePx: number): HTMLCanvasElement {
+    // Mount a temporary container, render QRCodeSVG, rasterize via DOM
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;';
+    container.innerHTML = renderToStaticMarkup(<QRCodeSVG value={sku} size={sizePx} level="M" />);
+    document.body.appendChild(container);
+
+    const svgEl = container.querySelector('svg')!;
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    document.body.removeChild(container);
+
+    // Draw SVG onto canvas using img with base64
+    const c = document.createElement('canvas');
+    c.width = sizePx;
+    c.height = sizePx;
+    const cx = c.getContext('2d')!;
+
+    // Fallback: draw QR manually from SVG path data
+    const pathEl = container.querySelector('path[fill="#000000"],path:last-child');
+    // Parse the SVG to draw on canvas using a temporary Image
+    // We'll use the synchronous approach: draw white bg + re-parse path
+    cx.fillStyle = '#FFFFFF';
+    cx.fillRect(0, 0, sizePx, sizePx);
+
+    // Extract all black rects/paths from the SVG and redraw
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = svgData;
+    const paths = tempDiv.querySelectorAll('path[fill="#000000"]');
+    if (paths.length > 0) {
+      cx.fillStyle = '#000000';
+      const viewBox = tempDiv.querySelector('svg')?.getAttribute('viewBox')?.split(' ').map(Number) ?? [0, 0, sizePx, sizePx];
+      const scale = sizePx / (viewBox[2] || sizePx);
+      paths.forEach((p) => {
+        const d = p.getAttribute('d') ?? '';
+        // Parse simple path commands (M, h, v, H, z format from qrcode.react)
+        const path2d = new Path2D(d);
+        cx.save();
+        cx.scale(scale, scale);
+        cx.fill(path2d);
+        cx.restore();
+      });
+    }
+    return c;
+  }
+
+  // ─── Print (HTML for EPSON) — new layout: QR top, text bottom ───
 
   async function handlePrint() {
     const cfg = LABEL_CONFIGS[labelSize];
     const grid = calcGrid(labelSize);
-
     const labels = selected.flatMap((s) => Array.from({ length: s.quantity }, () => s));
     const weightMap = await fetchWeights([...new Set(selected.map((s) => s.id))]);
-    const maxChars = labelSize === 'large' ? 18 : 16;
+    const totalPages = Math.ceil(labels.length / grid.perPage);
 
     const labelHtml = labels.map((l) => {
-      const qrSize = cfg.qr * 3.78; // mm to px approx at 96dpi
-      const qrSvg = renderToString(<QRCodeSVG value={l.sku} size={qrSize} level="M" />);
+      const qrPx = cfg.qr * 3.78;
+      const qrSvg = renderToString(<QRCodeSVG value={l.sku} size={qrPx} level="M" />);
       const weight = formatWeight(weightMap.get(l.id) ?? null);
       return `
         <div class="label">
-          <div class="label-info">
-            <div class="name">${escapeHtml(l.name)}</div>
-            <div class="sku">${escapeHtml(l.sku)}</div>
-            <div class="weight">${weight}</div>
-          </div>
           <div class="qr">${qrSvg}</div>
+          <div class="info">
+            <div class="name">${escapeHtml(l.name)}</div>
+            <div class="meta">${escapeHtml(l.sku)} · ${weight}</div>
+          </div>
         </div>`;
     }).join('');
 
-    const totalPages = Math.ceil(labels.length / grid.perPage);
-
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-
-    printWindow.document.write(`<html><head><title>Etiquetas QR - ${labels.length} unidades</title>
+    printWindow.document.write(`<html><head><title>Etiquetas QR</title>
       <style>
         @page { size: A4; margin: 0; }
         * { box-sizing: border-box; }
-        body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 10mm; color: #000; }
-        .grid {
-          display: flex; flex-wrap: wrap;
-          gap: ${cfg.gap}mm;
-          width: ${PAGE_W}mm;
-        }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 10mm; color: #000; }
+        .grid { display: flex; flex-wrap: wrap; gap: ${cfg.gap}mm; width: ${PAGE_W}mm; }
         .label {
           width: ${cfg.w}mm; height: ${cfg.h}mm;
-          border: 0.3mm solid #000;
-          padding: 1.5mm;
-          display: flex; align-items: center; gap: 1.5mm;
-          overflow: hidden;
-          page-break-inside: avoid;
+          border: 0.3mm solid #000; padding: 1mm;
+          display: flex; flex-direction: column; align-items: center;
+          overflow: hidden; page-break-inside: avoid;
         }
-        .label-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.5mm; }
-        .name { font-weight: bold; font-size: ${cfg.fontSize}mm; line-height: 1.25;
-                 overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-        .sku { font-size: ${cfg.fontSize * 0.75}mm; color: #333; font-family: monospace; font-weight: 600; }
-        .weight { font-size: ${cfg.fontSize * 0.75}mm; color: #333; font-weight: 600; }
-        .qr { flex-shrink: 0; }
-        .qr svg { display: block; width: ${cfg.qr}mm; height: ${cfg.qr}mm; }
-        .page-info { font-size: 2.5mm; color: #999; text-align: right; margin-top: 2mm; }
+        .qr { flex: 1; display: flex; align-items: center; justify-content: center; }
+        .qr svg { width: ${cfg.qr}mm; height: ${cfg.qr}mm; }
+        .info { width: 100%; text-align: center; }
+        .name { font-weight: bold; font-size: ${cfg.fontSize}mm; line-height: 1.2;
+                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .meta { font-size: ${cfg.fontSize * 0.8}mm; color: #333; font-family: monospace; }
       </style></head><body>
       <div class="grid">${labelHtml}</div>
-      ${totalPages > 1 ? `<div class="page-info">${labels.length} etiquetas en ${totalPages} paginas</div>` : ''}
       <script>window.print();<\/script>
       </body></html>`);
     printWindow.document.close();
   }
 
-  // ─── Download PNG for Cricut (Canvas API, 300 DPI) ─────
+  // ─── Download PNG for Cricut — QR top, text bottom, Canvas API ─────
 
   async function handleDownloadPNG() {
     const cfg = LABEL_CONFIGS[labelSize];
     const grid = calcGrid(labelSize);
-
     const labels = selected.flatMap((s) => Array.from({ length: s.quantity }, () => s));
     if (labels.length === 0) return;
 
     const weightMap = await fetchWeights([...new Set(selected.map((s) => s.id))]);
     const totalPages = Math.ceil(labels.length / grid.perPage);
 
-    // Pre-render QR codes as Image objects (data URI to avoid canvas security issues)
+    // Pre-render QR codes to canvases (DOM-based, 100% reliable)
+    const qrCanvases = new Map<string, HTMLCanvasElement>();
     const uniqueSkus = [...new Set(labels.map((l) => l.sku))];
-    const qrImages = new Map<string, HTMLImageElement>();
-    await Promise.all(
-      uniqueSkus.map(
-        (sku) =>
-          new Promise<void>((resolve) => {
-            const svgStr = renderToStaticMarkup(<QRCodeSVG value={sku} size={400} level="M" />);
-            const dataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
-            const img = new Image();
-            img.onload = () => { qrImages.set(sku, img); resolve(); };
-            img.onerror = () => { console.warn('QR load failed for', sku); resolve(); };
-            img.src = dataUri;
-          }),
-      ),
-    );
+    for (const sku of uniqueSkus) {
+      qrCanvases.set(sku, renderQrToCanvas(sku, 400));
+    }
 
     const DPI = 300;
     const mmToPx = DPI / 25.4;
@@ -302,7 +324,6 @@ export function EtiquetasPage() {
       canvas.width = canvasW;
       canvas.height = canvasH;
       const ctx = canvas.getContext('2d')!;
-      // Background stays transparent (default for canvas)
 
       pageLabels.forEach((l, idx) => {
         const col = idx % grid.cols;
@@ -311,47 +332,47 @@ export function EtiquetasPage() {
         const y = row * (cfg.h + cfg.gap) * mmToPx;
         const w = cfg.w * mmToPx;
         const h = cfg.h * mmToPx;
-        const pad = 1.5 * mmToPx;
+        const pad = 1 * mmToPx;
 
-        // White label background
+        // White background + border
         ctx.fillStyle = 'white';
         ctx.fillRect(x, y, w, h);
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 0.3 * mmToPx;
         ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
 
-        // QR code
-        const qrSize = cfg.qr * mmToPx;
-        const qrX = x + w - qrSize - pad;
-        const qrY = y + (h - qrSize) / 2;
-        const qrImg = qrImages.get(l.sku);
-        if (qrImg) ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        // QR code — centered, top area
+        const qrSizePx = cfg.qr * mmToPx;
+        const qrX = x + (w - qrSizePx) / 2;
+        const qrY = y + pad;
+        const qrCanvas = qrCanvases.get(l.sku);
+        if (qrCanvas) ctx.drawImage(qrCanvas, qrX, qrY, qrSizePx, qrSizePx);
 
-        // Text area width
-        const textMaxW = w - qrSize - pad * 3;
+        // Text below QR
+        const textY = qrY + qrSizePx + pad * 0.5;
+        const textCenterX = x + w / 2;
         const nameFontPx = cfg.fontSize * mmToPx;
-        const smallFontPx = cfg.fontSize * 0.75 * mmToPx;
+        const metaFontPx = cfg.fontSize * 0.8 * mmToPx;
 
-        // Product name (max 2 lines)
+        // Product name (1 line, centered, truncated)
         ctx.fillStyle = '#000';
         ctx.font = `bold ${nameFontPx}px Arial, sans-serif`;
-        const nameLines = wrapCanvasText(ctx, l.name, textMaxW);
-        nameLines.slice(0, 2).forEach((line, i) => {
-          ctx.fillText(line, x + pad, y + pad + nameFontPx * 0.85 + nameFontPx * 1.2 * i, textMaxW);
-        });
+        ctx.textAlign = 'center';
+        let displayName = l.name;
+        while (ctx.measureText(displayName).width > w - pad * 2 && displayName.length > 1) {
+          displayName = displayName.slice(0, -2) + '…';
+        }
+        ctx.fillText(displayName, textCenterX, textY + nameFontPx * 0.85);
 
-        // SKU
-        ctx.fillStyle = '#333';
-        ctx.font = `600 ${smallFontPx}px monospace`;
-        ctx.fillText(l.sku, x + pad, y + h - pad - smallFontPx * 1.1, textMaxW);
-
-        // Weight
+        // SKU + weight (1 line, centered)
         const weight = formatWeight(weightMap.get(l.id) ?? null);
-        ctx.font = `600 ${smallFontPx}px Arial, sans-serif`;
-        ctx.fillText(weight, x + pad, y + h - pad + smallFontPx * 0.15, textMaxW);
+        ctx.fillStyle = '#333';
+        ctx.font = `600 ${metaFontPx}px monospace`;
+        ctx.fillText(`${l.sku} · ${weight}`, textCenterX, textY + nameFontPx + metaFontPx * 0.9);
+
+        ctx.textAlign = 'left'; // reset
       });
 
-      // Download as PNG
       const dataUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = dataUrl;
@@ -582,14 +603,13 @@ export function EtiquetasPage() {
                     const pxH = cfg.h * 3;
                     const qrPx = cfg.qr * 3;
                     return (
-                      <div key={s.id} className="flex items-center gap-1 rounded border border-black p-1" style={{ width: pxW, height: pxH }}>
-                        <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-[8px] font-bold leading-tight">{s.name}</p>
-                          <p className="mt-0.5 font-mono text-[7px] font-semibold text-gray-600">{s.sku}</p>
-                          <p className="text-[7px] font-semibold text-gray-600">—</p>
-                        </div>
-                        <div className="shrink-0">
+                      <div key={s.id} className="flex flex-col items-center rounded border border-black p-1" style={{ width: pxW, height: pxH }}>
+                        <div className="flex flex-1 items-center">
                           <QRCodeSVG value={s.sku} size={qrPx} level="M" />
+                        </div>
+                        <div className="w-full text-center">
+                          <p className="truncate text-[7px] font-bold leading-tight">{s.name}</p>
+                          <p className="font-mono text-[6px] text-gray-600">{s.sku}</p>
                         </div>
                       </div>
                     );
