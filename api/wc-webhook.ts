@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('client_wc_map')
         .select('cliente_id')
         .eq('wc_customer_id', wcCustomerId)
-        .single();
+        .maybeSingle();
 
       if (existingMap) {
         clienteId = existingMap.cliente_id;
@@ -83,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .select('id')
             .eq('email', wcEmail)
             .limit(1)
-            .single();
+            .maybeSingle();
           posClient = byEmail;
         }
 
@@ -126,7 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('product_wc_map')
         .select('product_id')
         .eq('wc_product_id', wcProductId)
-        .single();
+        .maybeSingle();
 
       if (!mapping) {
         results.push({ wc_product_id: wcProductId, status: 'not_mapped' });
@@ -141,7 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('is_active', true)
         .order('created_at', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!variant) {
         results.push({ wc_product_id: wcProductId, status: 'no_variant' });
@@ -154,7 +154,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .select('stock')
         .eq('almacen_id', almacen.id)
         .eq('variant_id', variant.id)
-        .single();
+        .maybeSingle();
 
       const prevStock = currentStock?.stock ?? 0;
       const newStock = Math.max(0, prevStock - quantity);
@@ -186,10 +186,82 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       results.push({ wc_product_id: wcProductId, status: 'stock_updated' });
     }
 
+    // Create nota + vtatkt items for this WC order
+    const orderTotal = parseFloat((order as Record<string, unknown>).total as string) || 0;
+    const orderNumber = (order as Record<string, unknown>).number || (order as Record<string, unknown>).id;
+    const paymentMethod = (order as Record<string, unknown>).payment_method_title as string || 'WooCommerce';
+    const fecha = new Date().toISOString().split('T')[0];
+    const hora = new Date().toTimeString().split(' ')[0];
+    const clienteName = wcName || 'Cliente WooCommerce';
+
+    // Get next folio
+    const { data: ctrl } = await supabase
+      .from('pvcntl')
+      .select('foliotkt')
+      .single();
+    const nextFolio = ((ctrl as Record<string, unknown>)?.foliotkt as number ?? 0) + 1;
+    const folioDisplay = `WC-${orderNumber}`;
+
+    // Insert vtatkt items
+    const vtaRows = [];
+    for (const item of order.line_items) {
+      const wcProductId = item.product_id;
+      const { data: mapping } = await supabase
+        .from('product_wc_map')
+        .select('product_id')
+        .eq('wc_product_id', wcProductId)
+        .maybeSingle();
+
+      vtaRows.push({
+        fecha,
+        hora,
+        vende: 'WooCommerce',
+        folio: nextFolio,
+        folio_display: folioDisplay,
+        can: item.quantity || 1,
+        art: item.name || `WC Product ${wcProductId}`,
+        prec: parseFloat(item.price) || 0,
+        cost: 0,
+        descue: 0,
+        cliente: clienteName,
+        status: 'VENDIDO',
+        metodo_pago: 'transferencia',
+        product_id: mapping?.product_id || null,
+      });
+    }
+
+    if (vtaRows.length > 0) {
+      await supabase.from('vtatkt').insert(vtaRows);
+    }
+
+    // Create nota
+    const isPaid = ['completed', 'processing'].includes(order.status);
+    await supabase.from('notas').insert({
+      folio: nextFolio,
+      folio_display: folioDisplay,
+      fecha,
+      hora,
+      cliente: clienteName,
+      vendedor: 'WooCommerce',
+      total: orderTotal,
+      pagado: isPaid ? orderTotal : 0,
+      metodo_pago: 'transferencia',
+      pago_status: isPaid ? 'pagado' : 'pendiente',
+      entrega_status: 'sin_entregar',
+      notas_pago: `Orden WooCommerce #${orderNumber} — ${paymentMethod}`,
+    });
+
+    // Update folio counter
+    await supabase
+      .from('pvcntl')
+      .update({ foliotkt: nextFolio })
+      .eq('id', 1);
+
     return res.status(200).json({
       ok: true,
       order_id: order.id,
       order_number: order.number,
+      folio: nextFolio,
       results,
     });
   } catch (err) {

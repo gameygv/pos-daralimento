@@ -341,11 +341,11 @@ export function NotasList() {
                             )}
 
                             {/* Items sold */}
-                            {expandedItems.length > 0 && (
-                              <div>
-                                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                  Artículos
-                                </p>
+                            <div>
+                              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                Artículos
+                              </p>
+                              {expandedItems.length > 0 ? (
                                 <div className="rounded border bg-white">
                                   <table className="w-full text-sm">
                                     <thead className="bg-muted/40">
@@ -368,8 +368,13 @@ export function NotasList() {
                                     </tbody>
                                   </table>
                                 </div>
-                              </div>
-                            )}
+                              ) : (
+                                <div className="rounded border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                                  Nota importada — Total: <span className="font-semibold text-foreground">{formatPrice(nota.total)}</span>
+                                  <span className="ml-2 capitalize">({nota.metodo_pago})</span>
+                                </div>
+                              )}
+                            </div>
 
                             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Historial de Pagos

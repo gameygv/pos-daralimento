@@ -54,15 +54,18 @@
   }
 }
 
-/* Print styles for corte and tickets */
+/* Print styles for tickets */
 @media print {
+  /* Hide everything except ticket content */
   body * {
     visibility: hidden;
   }
   .print-ticket,
   .print-ticket *,
   .corte-print,
-  .corte-print * {
+  .corte-print *,
+  #ticket,
+  #ticket * {
     visibility: visible;
   }
   .print-ticket,
@@ -74,5 +77,22 @@
     font-size: 10px;
     background: white;
     color: black;
+  }
+  #ticket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    max-width: 80mm;
+    padding: 4mm;
+    margin: 0;
+    background: white;
+    color: black;
+    box-shadow: none;
+    font-size: 10px;
+  }
+  /* Hide print buttons */
+  .print\\:hidden {
+    display: none !important;
   }
 }
