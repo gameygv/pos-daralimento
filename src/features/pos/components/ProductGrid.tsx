@@ -118,30 +118,33 @@ export function ProductGrid({ onProductSelect, onBarcodeScan, almacenPriceMap, a
       ) : (
         <ScrollArea className="flex-1">
           <div className="grid grid-cols-2 gap-3 pb-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {products.map((product) => (
+            {products.map((product) => {
+              const almStock = almacenStockMap ? (almacenStockMap.get(product.id) ?? 0) : product.total_stock;
+              const isOutOfStock = product.track_stock && almStock <= 0;
+              return (
               <button
                 key={product.id}
-                onClick={() => onProductSelect(product)}
-                className="group relative flex flex-col overflow-hidden rounded-lg bg-white shadow-sm transition-transform duration-100 hover:shadow-md active:scale-95"
+                onClick={() => { if (!isOutOfStock) onProductSelect(product); }}
+                disabled={isOutOfStock}
+                className={`group relative flex flex-col overflow-hidden rounded-lg shadow-sm transition-transform duration-100 ${
+                  isOutOfStock ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-white hover:shadow-md active:scale-95'
+                }`}
                 style={{ aspectRatio: '1' }}
               >
-                {/* Stock badge — shows almacén stock if selected, otherwise total */}
-                {product.track_stock && (() => {
-                  const stock = almacenStockMap ? (almacenStockMap.get(product.id) ?? 0) : product.total_stock;
-                  return (
-                    <span
-                      className={`absolute right-2 top-2 z-10 rounded-full px-2 py-0.5 text-xs font-bold ${
-                        stock <= 0
-                          ? 'bg-red-500 text-white'
-                          : stock <= 5
-                            ? 'bg-amber-500 text-white'
-                            : 'bg-emerald-500 text-white'
-                      }`}
-                    >
-                      {stock <= 0 ? 'Agotado' : stock}
-                    </span>
-                  );
-                })()}
+                {/* Stock badge */}
+                {product.track_stock && (
+                  <span
+                    className={`absolute right-2 top-2 z-10 rounded-full px-2 py-0.5 text-xs font-bold ${
+                      almStock <= 0
+                        ? 'bg-red-500 text-white'
+                        : almStock <= 5
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-emerald-500 text-white'
+                    }`}
+                  >
+                    {almStock <= 0 ? 'Agotado' : almStock}
+                  </span>
+                )}
                 {/* Image area */}
                 <div className="flex flex-1 items-center justify-center bg-gray-100 p-4">
                   {product.image_url ? (
@@ -172,7 +175,8 @@ export function ProductGrid({ onProductSelect, onBarcodeScan, almacenPriceMap, a
                   </div>
                 </div>
               </button>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       )}
