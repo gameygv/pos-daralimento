@@ -124,7 +124,7 @@ export function useCreateSale() {
         folio: nextFolio,
         folio_display: folioDisplay,
         can: item.quantity,
-        art: item.sku || item.name,
+        art: item.name || item.sku,
         prec: item.price,
         cost: item.cost ?? 0,
         descue: Math.round(totalDiscountPerUnit * 100) / 100,

@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useQuery } from '@tanstack/react-query';
 import { useCreateSale, type MetodoPago } from '../hooks/useSale';
 import { printTicketWithTemplate, type TicketTemplate, type FullTicketData, type TicketConfig } from '@/utils/ticketTemplates';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,6 +85,21 @@ export function PaymentDialog({
 }: PaymentDialogProps) {
   const { user } = useAuth();
   const createSale = useCreateSale();
+
+  // Get seller full name from vende table
+  const { data: sellerName } = useQuery({
+    queryKey: ['seller-name', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = (await supabase
+        .from('vende' as never)
+        .select('nomv')
+        .eq('codven' as never, user.id as never)
+        .maybeSingle()) as unknown as { data: { nomv: string } | null };
+      return data?.nomv ?? user.email?.split('@')[0] ?? 'Vendedor';
+    },
+    enabled: !!user,
+  });
   const { data: lealtadConfig } = useLealtadConfig();
   const acumularPuntos = useAcumularPuntos();
 
@@ -181,7 +197,7 @@ export function PaymentDialog({
     if (splitMode && !canConfirmSplit) return;
     if (!splitMode && !canConfirmSingle) return;
 
-    const seller = user?.email?.split('@')[0] ?? 'cajero';
+    const seller = sellerName ?? 'Vendedor';
     const cliente = clienteName || 'Mostrador';
 
     // Determine primary method for DB storage
@@ -244,7 +260,7 @@ export function PaymentDialog({
 
   async function handlePrint(template: TicketTemplate = 'standard') {
     const now = new Date();
-    const seller = user?.email?.split('@')[0] ?? 'cajero';
+    const seller = sellerName ?? 'Vendedor';
     const primaryMethod = usedPayments.length > 0
       ? [...usedPayments].sort((a, b) => b.amount - a.amount)[0]?.method ?? 'efectivo'
       : method;
@@ -471,7 +487,7 @@ export function PaymentDialog({
                   className="h-10 w-full rounded-lg border-amber-300 text-amber-700 hover:bg-amber-50"
                   disabled={createSale.isPending}
                   onClick={async () => {
-                    const seller = user?.email?.split('@')[0] ?? 'cajero';
+                    const seller = sellerName ?? 'Vendedor';
                     const cliente = clienteName || 'Mostrador';
                     // If user entered a partial amount, register it; otherwise 0
                     const partialPaid = method === 'efectivo' ? (parseFloat(amountReceived) || 0) : 0;
