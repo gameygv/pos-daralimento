@@ -339,40 +339,11 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
 
           <Separator />
 
-          {/* Section 3: Pricing */}
+          {/* Section 3: Weight */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Precios
+              Peso
             </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="base_price">Precio Publico</Label>
-                <Input
-                  id="base_price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...form.register('base_price')}
-                />
-                {form.formState.errors.base_price && (
-                  <p className="text-sm text-destructive">{form.formState.errors.base_price.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="precio_mayoreo">Precio Proveedores</Label>
-                <Input
-                  id="precio_mayoreo"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...form.register('precio_mayoreo')}
-                  placeholder="0 = sin precio proveedores"
-                />
-                {form.formState.errors.precio_mayoreo && (
-                  <p className="text-sm text-destructive">{form.formState.errors.precio_mayoreo.message}</p>
-                )}
-              </div>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="weight_grams">Peso (gramos)</Label>
               <Input
@@ -384,6 +355,11 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 placeholder="Ej: 500"
               />
             </div>
+            {!isEditing && (
+              <p className="text-xs text-muted-foreground">
+                Los precios se configuran por Punto de Venta despues de crear el producto.
+              </p>
+            )}
           </div>
 
           {/* Section: Precios por Punto de Venta (edit mode only) */}

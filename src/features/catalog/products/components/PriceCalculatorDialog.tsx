@@ -17,8 +17,6 @@ interface PriceCalculatorDialogProps {
   onOpenChange: (open: boolean) => void;
   productId: string | null;
   productName: string;
-  basePrice: number;
-  precioMayoreo: number;
 }
 
 function formatCurrency(n: number) {
@@ -30,8 +28,6 @@ export function PriceCalculatorDialog({
   onOpenChange,
   productId,
   productName,
-  basePrice,
-  precioMayoreo,
 }: PriceCalculatorDialogProps) {
   const [selectedAlmacenId, setSelectedAlmacenId] = useState('');
   const [gramos, setGramos] = useState('');
@@ -66,7 +62,7 @@ export function PriceCalculatorDialog({
     }
   }, [open, almacenes]);
 
-  // Get prices for selected almacén (or global if none selected)
+  // Get prices for selected almacén
   const prices = useMemo(() => {
     if (selectedAlmacenId) {
       const almPrecio = almacenPrecios.find((p) => p.almacen_id === selectedAlmacenId);
@@ -77,11 +73,8 @@ export function PriceCalculatorDialog({
         };
       }
     }
-    return {
-      publico: basePrice,
-      proveedor: precioMayoreo,
-    };
-  }, [selectedAlmacenId, almacenPrecios, basePrice, precioMayoreo]);
+    return { publico: 0, proveedor: 0 };
+  }, [selectedAlmacenId, almacenPrecios]);
 
   // Calculate new prices
   const gramosNum = parseFloat(gramos) || 0;

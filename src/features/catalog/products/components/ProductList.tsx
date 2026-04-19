@@ -12,7 +12,6 @@ import {
 import { useProducts, useToggleProductActive } from '../hooks/useProducts';
 import type { StockFilter } from '../hooks/useProducts';
 import { useCategoryList } from '@/features/catalog/categories';
-import { formatPrice } from '../schemas/product.schema';
 import type { ProductSearchResult } from '@/integrations/supabase/catalog-types';
 import { ProductForm } from './ProductForm';
 import { PriceCalculatorDialog } from './PriceCalculatorDialog';
@@ -34,7 +33,7 @@ export function ProductList() {
   const [page, setPage] = useState(0);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [calcProduct, setCalcProduct] = useState<{ id: string; name: string; basePrice: number; precioMayoreo: number } | null>(null);
+  const [calcProduct, setCalcProduct] = useState<{ id: string; name: string } | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -161,7 +160,6 @@ export function ProductList() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Categoría</TableHead>
-                <TableHead className="text-right">Precio</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
                 <TableHead>Activo</TableHead>
                 <TableHead className="w-10" />
@@ -192,14 +190,6 @@ export function ProductList() {
                       {product.category_name ?? '—'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div>{formatPrice(product.base_price)}</div>
-                      {product.precio_mayoreo > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          May: {formatPrice(product.precio_mayoreo)}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
                       {product.total_stock}
                     </TableCell>
                     <TableCell>
@@ -220,8 +210,6 @@ export function ProductList() {
                           onClick={() => setCalcProduct({
                             id: product.id,
                             name: product.name,
-                            basePrice: product.base_price,
-                            precioMayoreo: product.precio_mayoreo,
                           })}
                         >
                           <Calculator className="h-4 w-4" />
@@ -280,8 +268,6 @@ export function ProductList() {
         onOpenChange={(open) => { if (!open) setCalcProduct(null); }}
         productId={calcProduct?.id ?? null}
         productName={calcProduct?.name ?? ''}
-        basePrice={calcProduct?.basePrice ?? 0}
-        precioMayoreo={calcProduct?.precioMayoreo ?? 0}
       />
     </div>
   );
