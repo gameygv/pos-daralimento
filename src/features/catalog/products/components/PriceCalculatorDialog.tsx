@@ -31,6 +31,7 @@ export function PriceCalculatorDialog({
 }: PriceCalculatorDialogProps) {
   const [selectedAlmacenId, setSelectedAlmacenId] = useState('');
   const [gramos, setGramos] = useState('');
+  const [pesoBase, setPesoBase] = useState('');
 
   const { data: almacenes = [] } = useAlmacenes();
   const { data: almacenPrecios = [] } = useProductAlmacenPrecios(productId);
@@ -54,6 +55,7 @@ export function PriceCalculatorDialog({
   useEffect(() => {
     if (open) {
       setGramos('');
+      setPesoBase('');
       if (almacenes.length === 1) {
         setSelectedAlmacenId(almacenes[0].id);
       } else {
@@ -61,6 +63,13 @@ export function PriceCalculatorDialog({
       }
     }
   }, [open, almacenes]);
+
+  // Pre-fill peso base when weight loads
+  useEffect(() => {
+    if (productWeight && productWeight > 0 && !pesoBase) {
+      setPesoBase(String(productWeight));
+    }
+  }, [productWeight, pesoBase]);
 
   // Get prices for selected almacén
   const prices = useMemo(() => {
@@ -78,10 +87,10 @@ export function PriceCalculatorDialog({
 
   // Calculate new prices
   const gramosNum = parseFloat(gramos) || 0;
-  const pesoRegistrado = productWeight ?? 0;
+  const pesoBaseNum = parseFloat(pesoBase) || 0;
 
-  const precioPorGramoPublico = pesoRegistrado > 0 ? prices.publico / pesoRegistrado : 0;
-  const precioPorGramoProveedor = pesoRegistrado > 0 ? prices.proveedor / pesoRegistrado : 0;
+  const precioPorGramoPublico = pesoBaseNum > 0 ? prices.publico / pesoBaseNum : 0;
+  const precioPorGramoProveedor = pesoBaseNum > 0 ? prices.proveedor / pesoBaseNum : 0;
 
   const precioCalculadoPublico = gramosNum > 0 ? precioPorGramoPublico * gramosNum : 0;
   const precioCalculadoProveedor = gramosNum > 0 ? precioPorGramoProveedor * gramosNum : 0;
@@ -130,65 +139,67 @@ export function PriceCalculatorDialog({
                 <p className="text-lg font-bold">{formatCurrency(prices.proveedor)}</p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Peso registrado: <strong>{pesoRegistrado > 0 ? `${pesoRegistrado}g` : 'No registrado'}</strong>
-              {pesoRegistrado > 0 && (
-                <span className="ml-2">
-                  ({precioPorGramoPublico > 0 ? `${formatCurrency(precioPorGramoPublico)}/g pub.` : ''}
-                  {precioPorGramoProveedor > 0 ? ` · ${formatCurrency(precioPorGramoProveedor)}/g prov.` : ''})
-                </span>
-              )}
-            </p>
+            {pesoBaseNum > 0 && (precioPorGramoPublico > 0 || precioPorGramoProveedor > 0) && (
+              <p className="text-xs text-muted-foreground">
+                {precioPorGramoPublico > 0 ? `${formatCurrency(precioPorGramoPublico)}/g pub.` : ''}
+                {precioPorGramoProveedor > 0 ? ` · ${formatCurrency(precioPorGramoProveedor)}/g prov.` : ''}
+              </p>
+            )}
           </div>
 
-          {/* Grams input */}
-          {pesoRegistrado > 0 ? (
-            <>
-              <div className="space-y-1.5">
-                <Label htmlFor="calc-gramos" className="flex items-center gap-1.5">
-                  <Scale className="h-3.5 w-3.5" />
-                  Gramos deseados
-                </Label>
-                <Input
-                  id="calc-gramos"
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={gramos}
-                  onChange={(e) => setGramos(e.target.value)}
-                  placeholder="Ej: 1000"
-                  className="text-lg"
-                  autoFocus
-                />
-              </div>
+          {/* Weight + grams inputs */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="calc-peso-base" className="flex items-center gap-1.5">
+                <Scale className="h-3.5 w-3.5" />
+                Peso base (g)
+              </Label>
+              <Input
+                id="calc-peso-base"
+                type="number"
+                min={1}
+                step={1}
+                value={pesoBase}
+                onChange={(e) => setPesoBase(e.target.value)}
+                placeholder="Ej: 500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="calc-gramos">Gramos deseados</Label>
+              <Input
+                id="calc-gramos"
+                type="number"
+                min={1}
+                step={1}
+                value={gramos}
+                onChange={(e) => setGramos(e.target.value)}
+                placeholder="Ej: 1000"
+                autoFocus
+              />
+            </div>
+          </div>
 
-              {/* Result */}
-              {gramosNum > 0 && (
-                <div className="rounded-lg border-2 border-teal-200 bg-teal-50 p-4 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-teal-700 flex items-center gap-1.5">
-                    <DollarSign className="h-3.5 w-3.5" />
-                    Precio para {gramosNum}g
+          {/* Result */}
+          {gramosNum > 0 && pesoBaseNum > 0 && (
+            <div className="rounded-lg border-2 border-teal-200 bg-teal-50 p-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-teal-700 flex items-center gap-1.5">
+                <DollarSign className="h-3.5 w-3.5" />
+                Precio para {gramosNum}g
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-teal-600">Precio Publico</p>
+                  <p className="text-2xl font-bold text-teal-800">
+                    {precioCalculadoPublico > 0 ? formatCurrency(precioCalculadoPublico) : '—'}
                   </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs text-teal-600">Precio Publico</p>
-                      <p className="text-2xl font-bold text-teal-800">
-                        {precioCalculadoPublico > 0 ? formatCurrency(precioCalculadoPublico) : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-teal-600">Precio Proveedor</p>
-                      <p className="text-2xl font-bold text-teal-800">
-                        {precioCalculadoProveedor > 0 ? formatCurrency(precioCalculadoProveedor) : '—'}
-                      </p>
-                    </div>
-                  </div>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-              Este producto no tiene peso registrado. Registra el peso en la ficha del producto para usar la calculadora.
+                <div>
+                  <p className="text-xs text-teal-600">Precio Proveedor</p>
+                  <p className="text-2xl font-bold text-teal-800">
+                    {precioCalculadoProveedor > 0 ? formatCurrency(precioCalculadoProveedor) : '—'}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
