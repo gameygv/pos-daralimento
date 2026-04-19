@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Pencil, Plus, Package, ChevronLeft, ChevronRight, X, ImageIcon, Calculator, RefreshCw, Globe, Check, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Pencil, Plus, Package, ChevronLeft, ChevronRight, X, ImageIcon, Calculator, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -23,6 +23,8 @@ import { syncProductToWC } from '../utils/syncProductToWC';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useAlmacenes } from '@/features/almacenes/hooks/useAlmacenes';
+import { Label } from '@/components/ui/label';
 
 const ALL_VALUE = '__all__';
 
@@ -42,6 +44,8 @@ export function ProductList() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [calcProduct, setCalcProduct] = useState<{ id: string; name: string } | null>(null);
+  const [almacenFilter, setAlmacenFilter] = useState<string>(ALL_VALUE);
+  const [showInactive, setShowInactive] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -52,7 +56,7 @@ export function ProductList() {
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [debouncedSearch, categoryFilter, stockFilter]);
+  }, [debouncedSearch, categoryFilter, stockFilter, almacenFilter, showInactive]);
 
   const { data, isLoading } = useProducts({
     query: debouncedSearch || null,
@@ -61,24 +65,38 @@ export function ProductList() {
     page,
   });
   const { data: categories = [] } = useCategoryList();
+  const { data: almacenes = [] } = useAlmacenes();
   const toggleActive = useToggleProductActive();
   const queryClient = useQueryClient();
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
-  // Fetch "Página Web" almacén prices (to know which products are linked)
-  const { data: paginaWebPrecios = [] } = useQuery<Array<{ product_id: string; precio_publico: number }>>({
-    queryKey: ['pagina-web-precios'],
+  // Fetch ALL almacén prices (for almacén filter + Página Web detection)
+  const { data: allAlmacenPrecios = [] } = useQuery<Array<{ almacen_id: string; product_id: string; precio_publico: number; precio_proveedores: number }>>({
+    queryKey: ['all-almacen-precios-list'],
     queryFn: async () => {
-      const { data: alm } = (await supabase
-        .from('almacenes' as never).select('id').eq('nombre' as never, 'Página Web' as never).single()) as unknown as { data: { id: string } | null };
-      if (!alm) return [];
       const { data } = (await supabase
-        .from('almacen_precios' as never).select('product_id, precio_publico').eq('almacen_id' as never, alm.id as never)) as unknown as {
-        data: Array<{ product_id: string; precio_publico: number }> | null;
+        .from('almacen_precios' as never).select('almacen_id, product_id, precio_publico, precio_proveedores')) as unknown as {
+        data: Array<{ almacen_id: string; product_id: string; precio_publico: number; precio_proveedores: number }> | null;
       };
-      return (data ?? []).filter((p) => p.precio_publico > 0);
+      return data ?? [];
     },
   });
+
+  // Products linked to each almacén (has precio_publico > 0 OR precio_proveedores > 0)
+  const productsByAlmacen = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const p of allAlmacenPrecios) {
+      if (p.precio_publico > 0 || p.precio_proveedores > 0) {
+        if (!map.has(p.almacen_id)) map.set(p.almacen_id, new Set());
+        map.get(p.almacen_id)!.add(p.product_id);
+      }
+    }
+    return map;
+  }, [allAlmacenPrecios]);
+
+  // "Página Web" linked products (for WC column)
+  const paginaWebAlmacen = almacenes.find((a) => a.nombre === 'Página Web');
+  const linkedProducts = paginaWebAlmacen ? (productsByAlmacen.get(paginaWebAlmacen.id) ?? new Set<string>()) : new Set<string>();
 
   // Fetch WC mappings
   const { data: wcMappings = [] } = useQuery<Array<{ product_id: string; wc_product_id: number; synced_at: string | null }>>({
@@ -112,20 +130,43 @@ export function ProductList() {
     setSyncingId(null);
   }
 
-  const products = data?.products ?? [];
+  const rawProducts = data?.products ?? [];
   const hasNextPage = data?.hasNextPage ?? false;
   const totalFetched = data?.totalFetched ?? 0;
+
+  // Client-side filters: almacén + inactive
+  const products = useMemo(() => {
+    let filtered = rawProducts;
+    // Filter by almacén
+    if (almacenFilter !== ALL_VALUE) {
+      const almacenProducts = productsByAlmacen.get(almacenFilter);
+      if (almacenProducts) {
+        filtered = filtered.filter((p) => almacenProducts.has(p.id));
+      } else {
+        filtered = [];
+      }
+    }
+    // Filter inactive
+    if (!showInactive) {
+      filtered = filtered.filter((p) => p.is_active);
+    }
+    return filtered;
+  }, [rawProducts, almacenFilter, productsByAlmacen, showInactive]);
 
   const hasActiveFilters =
     search !== '' ||
     categoryFilter !== ALL_VALUE ||
-    stockFilter !== 'all';
+    stockFilter !== 'all' ||
+    almacenFilter !== ALL_VALUE ||
+    showInactive;
 
   const clearFilters = useCallback(() => {
     setSearch('');
     setDebouncedSearch('');
     setCategoryFilter(ALL_VALUE);
     setStockFilter('all');
+    setAlmacenFilter(ALL_VALUE);
+    setShowInactive(false);
     setPage(0);
   }, []);
 
@@ -170,6 +211,17 @@ export function ProductList() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={almacenFilter} onValueChange={setAlmacenFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Punto de Venta" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Todos los puntos de venta</SelectItem>
+            {almacenes.map((alm) => (
+              <SelectItem key={alm.id} value={alm.id}>{alm.nombre}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as StockFilter)}>
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Stock" />
@@ -182,6 +234,16 @@ export function ProductList() {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-1.5">
+          <Switch
+            id="show-inactive"
+            checked={showInactive}
+            onCheckedChange={setShowInactive}
+          />
+          <Label htmlFor="show-inactive" className="text-xs text-muted-foreground cursor-pointer">
+            Inactivos
+          </Label>
+        </div>
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
             <X className="mr-1 h-4 w-4" />
