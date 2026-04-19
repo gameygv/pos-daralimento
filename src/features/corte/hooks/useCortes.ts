@@ -63,12 +63,12 @@ const TODAY_SALES_KEY = ['today-sales'] as const;
 const METHOD_LABELS: Record<string, string> = {
   efectivo: 'Efectivo',
   tarjeta: 'Tarjeta',
-  credito: 'Crédito',
   transferencia: 'Transferencia',
-  otros: 'Otros',
+  trueque: 'Trueque',
+  regalo: 'Regalo',
 };
 
-const ALL_METHODS = ['efectivo', 'tarjeta', 'credito', 'transferencia', 'otros'];
+const ALL_METHODS = ['efectivo', 'tarjeta', 'transferencia', 'trueque', 'regalo'];
 
 export function useCorteHistory() {
   return useQuery<CorteRow[]>({
@@ -263,11 +263,6 @@ export function useCreateCorte() {
       const nextFolioCorte = (ctrl?.foliocor ?? 0) + 1;
       const now = new Date();
 
-      // IVA = totalSales - (totalSales / 1.16) — extract IVA from price that includes tax
-      const ivaRate = 0.16;
-      const subtotalSinIva = corteData.totalSales / (1 + ivaRate);
-      const ivaTotal = corteData.totalSales - subtotalSinIva;
-
       const { error } = (await supabase.from('corte' as never).insert({
         ultcort: nextFolioCorte,
         fecha: now.toISOString().split('T')[0],
@@ -275,7 +270,7 @@ export function useCreateCorte() {
         initk: corteData.initk,
         ulttk: corteData.ulttk,
         vtato: corteData.totalSales,
-        ivare: Math.round(ivaTotal * 100) / 100,
+        ivare: 0,
         ctovd: corteData.totalCost,
         utibr: corteData.profit,
         ...(corteData.cajaId ? { caja_id: corteData.cajaId } : {}),

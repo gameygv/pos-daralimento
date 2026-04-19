@@ -1,0 +1,85 @@
+0e1720d8-b806-45ef-8d68-41f781eae6a6|ALAS
+af4eef3e-6418-41ab-9cb3-ea92fdd4ae46|Alimento para mascota cocido
+51666988-30b2-4bf9-8b6f-4222c30ef143|Alimento para mascota crudo
+bdbfce2e-223d-4620-85d0-4d61f8f57dde|BORREGO - Cabeza de Lomo
+edbf5b2f-7dc1-4803-9e8d-cc47c2f7a572|BORREGO - Caldo de hueso
+cd0d6b7f-5179-4746-9c36-85b25bba63f7|BORREGO - Carne Brocheta
+5392ca87-96f3-4809-93a9-cf9d21ed98ff|BORREGO - Costillas
+3248e3db-bf84-4ec9-ac36-f6497ddd5bba|BORREGO - Filete
+6d20868b-ec81-46ec-9059-5de2503fb2fa|BORREGO - Lomo
+03848777-3c55-4abf-8c03-e8d401bc0d87|BORREGO - Maciza
+e3b8e788-87fb-47c7-a8dd-39b61533014f|BORREGO - Molida
+a4564989-8e52-4142-ac0e-44825629f4d2|BORREGO - Pierna Ahumada
+4dd9e9d8-89f3-46e0-b6eb-5e31c2cf90a2|BORREGO - Rolló ahumado
+081a201f-d9f7-4788-8063-77f9365703c3|BORREGO - Salchicha chile morita
+0fcd209f-affa-40f2-aa08-01fd1ddb2419|BORREGO - Salchicha Chipotle
+0b4478b8-dd18-499a-841e-8b3621680872|Borrego, salchicha chipotle aprox
+f86c1f37-3531-4f71-b506-2f7ccc7e733a|BORREGO - Salchicha cruda con Guajillo
+43bbbfa1-6166-47e1-a3c1-b8072278fed5|BORREGO - Salchicha Guajillo
+2e18863f-a5b8-433f-b7be-853534cfb40f|CERDO - Cabeza de Lomo
+3800eff0-0c9b-4f0a-8847-7910beab1b44|CERDO - Caldo de hueso
+678f0ffc-58af-4407-9e37-c65bedff25d0|CERDO - Caldo Hueso
+9560b514-5518-4b75-bc44-3cb750a86f8b|CERDO -CARNE MOLIDA
+69a99e99-198d-40ed-969f-d5e0bcd5d644|CERDO Chicharrón ( )
+f0a1e5de-7d17-47ca-b806-3ecdcaccb8fd|CERDO - Chorizo
+cf3b8035-ce56-4025-800b-0aa272b60073|CERDO - Chuleta
+385a506b-d2a2-40ea-8068-dfafcd00a469|CERDO - COSTILLA
+18210a9f-371c-4710-9797-2ef372284184|CERDO - Costilla Ahumada
+06bbb9f3-28f5-414b-b1d1-29446e188ec3|CERDO - Filete
+223337f3-784b-4185-9aca-6a12c795f176|CERDO - Gorditas de Chicharrón 4pz
+5325540d-7ab5-4000-a76a-f1a4a16bfe1a|CERDO - HIGADO
+dd6d290e-2331-4bcb-8e42-205aac5b189a|CERDO- Jerky
+695646a1-a4b1-4d71-b67d-3b675e14e54f|CERDO - Lomo
+1610e0be-2b19-426b-9dea-cbba010f537e|CERDO - Lomo (555 - )
+150f049e-82a5-4d42-aaeb-f8d1ae0f85f8|CERDO- Lomo ahumado
+00e70e45-7a29-45be-b9bf-a4cef5d29707|CERDO - Maciza
+81842714-4717-4d7e-8f00-196dcd5cf820|CERDO- Manteca
+a897acf9-98bb-4b88-8789-14989b26467c|CERDO - Pierna Ahumada
+7ef1c452-c075-42c7-8886-5bdd2e030a5b|CERDO- Rollo de Tocino
+60fe6ad1-a4a8-4a0f-ad0d-b341d6abe66e|CERDO- Rollo de tocino ahumado
+02910fe3-4fda-46b4-9a12-b3a0e7beba06|CERDO - SALCHICHA FRESCA DE AJO CON VINO
+8e61e218-1f9b-4156-afaf-e18f12789d6c|CERDO - Tocino Ahumado
+c0997a94-4e14-4e50-b1cd-02f192aaff69|CERDO- Tocino rebanado
+1e469a99-f9e6-4367-9c6e-416d71c05d60|Copia de CERDO- Chorizo
+b3858440-2d0b-49bb-a19e-2c7b8802dfe2|Copia de CERDO - Lomo (555 - )
+9815698e-6d1a-43ad-8038-2845a86092ee|Copia de CERDO- Pierna Ahumada
+ce60a874-908b-46a7-91b2-0afc8dc265a3|Copia de PIERNA Y MUSLO
+a0b214bb-c2c8-4eed-b400-7af6442b716d|CORAZONES
+5d26e2e7-60c0-42c8-a042-a8001904904b|FILETE
+27ca9846-e35b-4f04-b549-d8f4aa23ee09|GORDITAS DE CHICHARRÓN
+8edaf341-3ded-467b-a4b5-3ed60c8fac47|HIGADO
+6dba2d6e-025d-4132-a492-46f27fa0429c|JERKY
+353dab10-e6bc-4eb8-955d-e52d381ccabf|MANTECA
+d4475e6e-b500-49e5-a1ed-7c33fb32ce82|MANTECA 1/
+a32b9216-d003-43e0-92f3-e25c6b843397|MITAD DE POLLO
+9e42ec07-6a5b-4a16-917f-ff34661e9ba9|MOLLEJAS
+a5de350c-99ff-4bb9-8c21-247baa0472a4|PECHUGA
+2bf86591-80a6-47a8-8a3c-4fbc0f2b7dc6|PIERNA Y MUSLO
+2f223faa-4607-4577-a38a-609c1ddef4e2|POLLO - ALAS
+74280dbe-a4b0-4415-8d3e-41185dd92010|POLLO - ALAS aprox.
+13d7a678-5525-4c7d-8043-444d4783b1f6|POLLO - Caldo Hueso
+9223a288-7fa9-4b8c-a697-cf8c3fda26ae|POLLO - Chorizo
+7386d77f-5644-4e1a-93d2-1d7b0a41e34a|POLLO - CORAZÓN
+30b7ae5e-74ca-4c9c-9eb2-ef9c9ce08d33|POLLO - CORAZONES
+9169b483-8b3b-4cfd-b232-5985c507dbdb|POLLO ENTERO
+a936b585-f695-4d09-bf49-94a06b31ac14|POLLO - HIGADO
+f9749793-39a6-4e68-9662-e765e6dc2e6e|POLLO - MEDIO POLLO
+07b7156a-869e-4c32-be2d-f6aa829f3166|POLLO - MOLIDA
+a90b4e05-071a-4406-862e-6323f74b6ab5|POLLO - MOLLEJAS
+945cd853-0366-4a6b-a714-4f3ad086c962|POLLO - PARTIDO
+ae2d106b-9c53-4439-8fb3-2ca52e826558|POLLO - PECHUGA
+b127b9d5-36c7-4c86-a3e8-0a845e076d76|POLLO - PECHUGA (625 - )
+619d6197-7c04-4954-8873-d1739f1f24aa|POLLO - PECHUGA (.850- )
+4bfe2e94-52c1-4db0-8720-9106bcdae377|POLLO - PIERNA Y MUSLO
+6cdad48d-a774-4202-9850-d6b9ead04b19|POLLO - PIEZAS (715 - )
+91142481-2e61-4faf-9e8e-19719a5478c9|PORK BELLY
+47c2b58b-e17a-4a5a-b3b9-7880e886fc91|Queso Oaxaca ahumado x pz
+2fc46b7b-bb7b-48ba-8ea1-08093305fca4|RES - Caldo Hueso
+dde844f4-88f8-4cf6-9d22-5c8e4cfdc865|RES- JERKY
+cb95e147-43ee-4e44-8294-e648f1d6ccd0|Salami Argentino (150 - )
+abd8bd22-97c0-45c4-8e56-040b21112a27|Salami Argentino(200- )
+ce3d483b-79cc-4033-a58c-d469de0cfd29|Salami Borrego (100 - )
+35be99e6-d1da-4139-8e1a-c54cb7dc3d55|Salami c/ Miel (100 - )
+3afa61c5-42b6-4d73-ae66-875bedec305e|Salami c/ Miel (150 - )
+8d19685a-8b45-4483-9618-0e4a2ad7c521|Salami Italiano Ahumado (100 - )
+a9aef693-c41f-47a6-a6a3-961fce5c0423|Salami Paprika y Chipotle (100- )

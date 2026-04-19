@@ -2,18 +2,14 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, Tags, MonitorSmartphone,
-  Warehouse, Users2, BarChart3, Calculator, CreditCard, Wallet,
-  Settings, ScrollText, LogOut, PanelLeftClose, PanelLeft, Monitor,
-  RotateCcw, Truck, FileText,
-  Ticket,
-  Store,
+  Warehouse, Users2, BarChart3, CreditCard, Wallet,
+  Settings, ScrollText, LogOut, PanelLeftClose, PanelLeft,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useMyActiveSession, useActiveCajas } from '@/features/cajas/hooks/useCajas';
-import { ForceCorteDialog } from '@/components/ForceCorteDialog';
 import type { Permission } from '@/lib/permissions';
 
 interface MenuItem {
@@ -33,17 +29,10 @@ const menuItems: MenuItem[] = [
   { label: 'Categorias',     path: '/categorias',    icon: Tags, permission: 'categorias' },
   { label: 'Inventario',     path: '/inventario',    icon: Warehouse, permission: 'inventario' },
   { label: 'Puntos de Venta', path: '/almacenes',     icon: Package, permission: 'almacenes' },
-  { label: 'Ord. Compra',   path: '/ordenes-compra', icon: Truck, permission: 'inventario' },
   { label: 'Reportes',       path: '/reportes',      icon: BarChart3, permission: 'reportes' },
-  { label: 'Corte',          path: '/corte',         icon: Calculator },
-  { label: 'Cupones',        path: '/cupones',       icon: Ticket, permission: 'cupones' },
-  { label: 'Devoluciones',   path: '/devoluciones',  icon: RotateCcw, permission: 'devoluciones' },
-  { label: 'CxC',            path: '/cxc',           icon: CreditCard, permission: 'cxc' },
-  { label: 'Creditos',       path: '/creditos',      icon: Wallet, permission: 'creditos' },
+  { label: 'Cuentas por Cobrar', path: '/cxc',        icon: CreditCard, permission: 'cxc' },
   { label: 'Gastos',         path: '/gastos',        icon: Wallet, permission: 'gastos' },
   { label: 'Usuarios',       path: '/usuarios',      icon: Settings, permission: 'usuarios' },
-  { label: 'Tiendas',         path: '/tiendas',       icon: Store, permission: 'tiendas' },
-  { label: 'Cajas',          path: '/cajas',         icon: Monitor, permission: 'cajas' },
   { label: 'Configuracion',  path: '/configuracion', icon: Settings, permission: 'configuracion' },
   { label: 'Etiquetas',      path: '/etiquetas',     icon: Tags, permission: 'etiquetas' },
   { label: 'Logs',           path: '/logs',          icon: ScrollText, permission: 'logs' },
@@ -55,21 +44,12 @@ export function Sidebar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { can, isAdmin } = usePermissions();
-  const { data: activeSession } = useMyActiveSession();
-  const { data: cajas = [] } = useActiveCajas();
+  const { can } = usePermissions();
   const [collapsed, setCollapsed] = useState(false);
-  const [showCorteDialog, setShowCorteDialog] = useState(false);
 
   const visibleItems = menuItems.filter((item) => !item.permission || can(item.permission));
-  const activeCajaName = cajas.find((c) => c.id === activeSession?.caja_id)?.nombre;
 
   function handleLogout() {
-    // Vendedores must do corte before logging out
-    if (!isAdmin && activeSession) {
-      setShowCorteDialog(true);
-      return;
-    }
     void signOut();
   }
 
@@ -137,11 +117,6 @@ export function Sidebar() {
         </Button>
       </div>
 
-      <ForceCorteDialog
-        open={showCorteDialog}
-        onOpenChange={setShowCorteDialog}
-        cajaName={activeCajaName}
-      />
     </aside>
   );
 }

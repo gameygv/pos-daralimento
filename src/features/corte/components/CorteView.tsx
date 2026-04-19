@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 import { useTodaySales, useCorteHistory, useCreateCorte } from '../hooks/useCortes';
 import type { CorteRow } from '../hooks/useCortes';
 import { CortePrint } from './CortePrint';
-import { useMyActiveSession, useCloseCaja, useActiveCajas } from '@/features/cajas/hooks/useCajas';
+import { useAutoSession, useActiveCajas } from '@/features/cajas/hooks/useCajas';
 
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat('es-MX', {
@@ -41,11 +41,11 @@ function formatPrice(amount: number): string {
 export function CorteView() {
   const { user } = useAuth();
   const { data: role } = useUserRole();
-  const { data: activeSession } = useMyActiveSession();
-  const { data: corteData, isLoading: loadingSales } = useTodaySales(activeSession?.id);
+  const { data: activeSession } = useAutoSession();
+  // Always use fallback mode (sales since last corte) since session stays open indefinitely
+  const { data: corteData, isLoading: loadingSales } = useTodaySales();
   const { data: cortes = [], isLoading: loadingCortes } = useCorteHistory();
   const createCorte = useCreateCorte();
-  const closeCaja = useCloseCaja();
   const { data: cajas = [] } = useActiveCajas();
   const activeCaja = cajas.find((c) => c.id === activeSession?.caja_id);
   const activeCajaName = activeCaja?.nombre;
@@ -78,22 +78,7 @@ export function CorteView() {
       });
       setPrintFolio(folio);
       setShowPrint(true);
-
-      // Close the caja session if one is active
-      if (activeSession) {
-        try {
-          await closeCaja.mutateAsync({
-            sessionId: activeSession.id,
-            montoCierre: corteData.totalSales,
-            corteId: folio,
-          });
-          toast.success(`Corte #${folio} registrado y caja cerrada`);
-        } catch {
-          toast.success(`Corte #${folio} registrado (no se pudo cerrar la sesion de caja)`);
-        }
-      } else {
-        toast.success(`Corte #${folio} registrado exitosamente`);
-      }
+      toast.success(`Corte #${folio} registrado exitosamente`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido';
       toast.error(`Error al realizar corte: ${msg}`);

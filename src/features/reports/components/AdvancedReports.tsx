@@ -35,9 +35,14 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { useAdvancedReport, type AdvancedReportRow } from '../hooks/useAdvancedReport';
-import { useVisibleTiendas, type TiendaRow } from '@/features/tiendas/hooks/useTiendas';
-import { useCajas, type CajaRow } from '@/features/cajas/hooks/useCajas';
+import { useAdvancedReport } from '../hooks/useAdvancedReport';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat('es-MX', {
@@ -51,9 +56,9 @@ const PIE_COLORS = ['#0d9488', '#f59e0b', '#6366f1', '#ec4899', '#84cc16', '#8b5
 const METHOD_LABELS: Record<string, string> = {
   efectivo: 'Efectivo',
   tarjeta: 'Tarjeta',
-  credito: 'Credito',
   transferencia: 'Transferencia',
-  otros: 'Otros',
+  trueque: 'Trueque',
+  regalo: 'Regalo',
 };
 
 function getWeekLabel(fecha: string): string {
@@ -65,42 +70,37 @@ function getWeekLabel(fecha: string): string {
 
 export function AdvancedReports() {
   const today = new Date().toISOString().split('T')[0];
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-  const [fechaDesde, setFechaDesde] = useState(thirtyDaysAgo);
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
+  const [fechaDesde, setFechaDesde] = useState(ninetyDaysAgo);
   const [fechaHasta, setFechaHasta] = useState(today);
-  const [tiendaFilter, setTiendaFilter] = useState<string>('all');
+  const [clienteFilter, setClienteFilter] = useState<string>('all');
+  const [metodoPagoFilter, setMetodoPagoFilter] = useState<string>('all');
+  const [entregaFilter, setEntregaFilter] = useState<string>('all');
 
   const { data: rows = [], isLoading } = useAdvancedReport(fechaDesde, fechaHasta);
-  const { data: tiendas = [] } = useVisibleTiendas();
-  const { data: allCajas = [] } = useCajas();
 
-  // Build set of allowed caja_ids based on visible tiendas
-  const visibleTiendaIds = useMemo(() => new Set(tiendas.map((t) => t.id)), [tiendas]);
-  const allowedCajaIds = useMemo(() => {
+  // Extract unique clients for filters
+  const uniqueClientes = useMemo(() => {
     const set = new Set<string>();
-    for (const c of allCajas) {
-      // Allow cajas with no tienda, or cajas whose tienda is visible
-      if (!c.tienda_id || visibleTiendaIds.has(c.tienda_id)) {
-        set.add(c.id);
-      }
-    }
-    return set;
-  }, [allCajas, visibleTiendaIds]);
+    for (const r of rows) if (r.cliente) set.add(r.cliente);
+    return [...set].sort();
+  }, [rows]);
 
-  // Filter rows by visibility + optional tienda filter
+  // Filter rows
   const active = useMemo(() => {
     return rows.filter((r) => {
       if (r.status === 'CANCELADO' || r.status === 'DEVUELTO') return false;
-      // Exclude sales from non-visible cajas
-      if (r.caja_id && !allowedCajaIds.has(r.caja_id)) return false;
-      // Tienda filter
-      if (tiendaFilter !== 'all' && r.caja_id) {
-        const caja = allCajas.find((c) => c.id === r.caja_id);
-        if (caja?.tienda_id !== tiendaFilter) return false;
+      if (clienteFilter !== 'all' && r.cliente !== clienteFilter) return false;
+      if (entregaFilter !== 'all' && r.entrega_status !== entregaFilter) return false;
+      if (metodoPagoFilter !== 'all') {
+        const raw = r.metodo_pago;
+        if (raw.includes('|')) {
+          if (!raw.split(',').some((p) => p.split('|')[0].trim() === metodoPagoFilter)) return false;
+        } else if (raw !== metodoPagoFilter) return false;
       }
       return true;
     });
-  }, [rows, allowedCajaIds, tiendaFilter, allCajas]);
+  }, [rows, clienteFilter, metodoPagoFilter, entregaFilter]);
 
   // --- KPIs ---
   const kpis = useMemo(() => {
@@ -110,9 +110,12 @@ export function AdvancedReports() {
     const folios = new Set(active.map((r) => r.folio));
     const ticketPromedio = folios.size > 0 ? totalVentas / folios.size : 0;
     const totalDescuento = active.reduce((s, r) => s + r.descue * r.can, 0);
-    const devoluciones = rows.filter((r) => r.status === 'DEVUELTO').length;
-    return { totalVentas, totalCosto, ganancia, tickets: folios.size, ticketPromedio, totalDescuento, devoluciones };
-  }, [active, rows]);
+    const totalPagado = active.reduce((s, r) => s + r.pagado, 0);
+    const totalSaldo = active.reduce((s, r) => s + r.saldo, 0);
+    const sinEntregar = active.filter((r) => r.entrega_status === 'sin_entregar').length;
+    const entregados = active.filter((r) => r.entrega_status === 'entregado').length;
+    return { totalVentas, totalCosto, ganancia, tickets: folios.size, ticketPromedio, totalDescuento, totalPagado, totalSaldo, sinEntregar, entregados };
+  }, [active]);
 
   // --- Daily trend (line chart) ---
   const dailyTrend = useMemo(() => {
@@ -218,38 +221,58 @@ export function AdvancedReports() {
 
   return (
     <div className="space-y-6">
-      {/* Date range */}
+      {/* Filters */}
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <label className="text-xs font-medium text-muted-foreground">Desde</label>
-          <Input type="date" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} className="w-[160px]" />
+          <Input type="date" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} className="w-[150px]" />
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground">Hasta</label>
-          <Input type="date" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} className="w-[160px]" />
+          <Input type="date" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} className="w-[150px]" />
         </div>
-        {tiendas.length > 1 && (
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Tienda</label>
-            <select
-              value={tiendaFilter}
-              onChange={(e) => setTiendaFilter(e.target.value)}
-              className="block h-10 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="all">Todas las tiendas</option>
-              {tiendas.map((t) => (
-                <option key={t.id} value={t.id}>{t.nombre}</option>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Cliente</label>
+          <Select value={clienteFilter} onValueChange={setClienteFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los clientes</SelectItem>
+              {uniqueClientes.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
-            </select>
-          </div>
-        )}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Entrega</label>
+          <Select value={entregaFilter} onValueChange={setEntregaFilter}>
+            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="entregado">Entregados</SelectItem>
+              <SelectItem value="sin_entregar">Sin Entregar</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Forma de Pago</label>
+          <Select value={metodoPagoFilter} onValueChange={setMetodoPagoFilter}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {Object.entries(METHOD_LABELS).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <p className="text-xs text-muted-foreground">
-          {active.length} registros en rango
+          {active.length} registros
         </p>
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -261,9 +284,17 @@ export function AdvancedReports() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <TrendingUp className="h-4 w-4 text-green-600" /> Ganancia
+              <TrendingUp className="h-4 w-4 text-green-600" /> Cobrado
             </div>
-            <p className="mt-1 text-xl font-bold text-green-700">{formatPrice(kpis.ganancia)}</p>
+            <p className="mt-1 text-xl font-bold text-green-700">{formatPrice(kpis.totalPagado)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CreditCard className="h-4 w-4 text-amber-500" /> Por Cobrar
+            </div>
+            <p className="mt-1 text-xl font-bold text-amber-600">{formatPrice(kpis.totalSaldo)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -293,17 +324,17 @@ export function AdvancedReports() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Percent className="h-4 w-4 text-orange-500" /> Descuentos
+              <Package className="h-4 w-4 text-blue-500" /> Entregados
             </div>
-            <p className="mt-1 text-xl font-bold text-orange-600">{formatPrice(kpis.totalDescuento)}</p>
+            <p className="mt-1 text-xl font-bold text-blue-600">{kpis.entregados}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Package className="h-4 w-4 text-purple-500" /> Devoluciones
+              <Package className="h-4 w-4 text-red-500" /> Sin Entregar
             </div>
-            <p className="mt-1 text-xl font-bold text-purple-600">{kpis.devoluciones}</p>
+            <p className="mt-1 text-xl font-bold text-red-600">{kpis.sinEntregar}</p>
           </CardContent>
         </Card>
       </div>
@@ -476,6 +507,59 @@ export function AdvancedReports() {
             </div>
           ) : (
             <p className="py-4 text-center text-sm text-muted-foreground">Sin datos</p>
+          )}
+        </CardContent>
+      </Card>
+      {/* Notas del período */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Notas del Período</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {active.filter((r) => r.source === 'nota').length === 0 && active.filter((r) => r.source === 'venta').length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">Sin notas en este período</p>
+          ) : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nota</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Pagado</TableHead>
+                    <TableHead className="text-right">Saldo</TableHead>
+                    <TableHead>Entrega</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[...new Map(active.map((r) => [r.folio, r])).values()]
+                    .sort((a, b) => b.fecha.localeCompare(a.fecha))
+                    .slice(0, 50)
+                    .map((r) => (
+                    <TableRow key={r.folio}>
+                      <TableCell className="font-mono text-sm">#{r.art.startsWith('IMP-') || r.art.startsWith('Nota') ? r.art : r.folio}</TableCell>
+                      <TableCell className="text-sm">{r.fecha}</TableCell>
+                      <TableCell className="text-sm">{r.cliente}</TableCell>
+                      <TableCell className="text-right text-sm">{formatPrice(r.total)}</TableCell>
+                      <TableCell className="text-right text-sm text-green-700">{formatPrice(r.pagado)}</TableCell>
+                      <TableCell className={`text-right text-sm font-semibold ${r.saldo > 0.01 ? 'text-amber-700' : 'text-green-700'}`}>
+                        {formatPrice(r.saldo)}
+                      </TableCell>
+                      <TableCell>
+                        {r.entrega_status === 'entregado' ? (
+                          <span className="text-xs text-blue-700">Entregado</span>
+                        ) : r.entrega_status === 'sin_entregar' ? (
+                          <span className="text-xs text-red-600">Sin entregar</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -2,9 +2,8 @@ import { useState } from 'react';
 import {
   Banknote,
   CreditCard,
-  HandCoins,
   ArrowRightLeft,
-  CircleDollarSign,
+  Repeat,
   Gift,
   CheckCircle,
   Printer,
@@ -27,8 +26,8 @@ import { printTicketWithTemplate, type TicketTemplate, type FullTicketData, type
 import { supabase } from '@/integrations/supabase/client';
 import type { CartItem, CartTotals } from '../types';
 import { incrementCouponUsage } from '@/features/cupones/hooks/useCupones';
-import { useCargoCredito } from '@/features/creditos/hooks/useCreditos';
 import { useLealtadConfig, useAcumularPuntos } from '@/features/lealtad/hooks/useLealtad';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 function formatPrice(amount: number): string {
@@ -41,9 +40,8 @@ function formatPrice(amount: number): string {
 const PAYMENT_METHODS: { id: MetodoPago; label: string; icon: React.ReactNode }[] = [
   { id: 'efectivo', label: 'Efectivo', icon: <Banknote className="h-5 w-5" /> },
   { id: 'tarjeta', label: 'Tarjeta', icon: <CreditCard className="h-5 w-5" /> },
-  { id: 'credito', label: 'Credito', icon: <HandCoins className="h-5 w-5" /> },
   { id: 'transferencia', label: 'Transferencia', icon: <ArrowRightLeft className="h-5 w-5" /> },
-  { id: 'otros', label: 'Otros', icon: <CircleDollarSign className="h-5 w-5" /> },
+  { id: 'trueque', label: 'Trueque', icon: <Repeat className="h-5 w-5" /> },
   { id: 'regalo', label: 'Regalo', icon: <Gift className="h-5 w-5" /> },
 ];
 
@@ -86,7 +84,6 @@ export function PaymentDialog({
 }: PaymentDialogProps) {
   const { user } = useAuth();
   const createSale = useCreateSale();
-  const cargoCredito = useCargoCredito();
   const { data: lealtadConfig } = useLealtadConfig();
   const acumularPuntos = useAcumularPuntos();
 
@@ -94,6 +91,11 @@ export function PaymentDialog({
   // Single payment mode
   const [method, setMethod] = useState<MetodoPago>('efectivo');
   const [amountReceived, setAmountReceived] = useState<string>('');
+  // Notes for trueque/regalo
+  const [truequeNote, setTruequeNote] = useState('');
+  const [regaloMotivo, setRegaloMotivo] = useState('');
+  const [splitTruequeNote, setSplitTruequeNote] = useState('');
+  const [splitRegaloMotivo, setSplitRegaloMotivo] = useState('');
   // Split payment mode
   const [splitMode, setSplitMode] = useState(false);
   const [splits, setSplits] = useState<SplitPayment[]>([]);
@@ -114,13 +116,21 @@ export function PaymentDialog({
   const splitRemaining = total - splitPaid;
 
   // Can confirm logic
-  const canConfirmSingle = method === 'regalo' || method !== 'efectivo' || received >= total;
+  const canConfirmSingle =
+    (method === 'regalo' && regaloMotivo.trim().length > 0) ||
+    (method === 'trueque' && truequeNote.trim().length > 0) ||
+    (method !== 'efectivo' && method !== 'regalo' && method !== 'trueque') ||
+    (method === 'efectivo' && received >= total);
   const canConfirmSplit = splitRemaining <= 0.01; // allow rounding
 
   function resetState() {
     setStep('payment');
     setMethod('efectivo');
     setAmountReceived('');
+    setTruequeNote('');
+    setRegaloMotivo('');
+    setSplitTruequeNote('');
+    setSplitRegaloMotivo('');
     setSplitMode(false);
     setSplits([]);
     setSplitMethod('efectivo');
@@ -184,6 +194,16 @@ export function PaymentDialog({
       ? splits
       : [{ id: '1', method, amount: method === 'regalo' ? 0 : total }];
 
+    // Build payment notes
+    const paymentNotes: string[] = [];
+    if (!splitMode) {
+      if (method === 'trueque' && truequeNote.trim()) paymentNotes.push(`Trueque: ${truequeNote.trim()}`);
+      if (method === 'regalo' && regaloMotivo.trim()) paymentNotes.push(`Regalo: ${regaloMotivo.trim()}`);
+    } else {
+      if (splits.some((s) => s.method === 'trueque') && splitTruequeNote.trim()) paymentNotes.push(`Trueque: ${splitTruequeNote.trim()}`);
+      if (splits.some((s) => s.method === 'regalo') && splitRegaloMotivo.trim()) paymentNotes.push(`Regalo: ${splitRegaloMotivo.trim()}`);
+    }
+
     const result = await createSale.mutateAsync({
       items,
       metodoPago: primaryMethod,
@@ -193,31 +213,12 @@ export function PaymentDialog({
       cajaSessionId,
       globalDiscountPct,
       splitPayments: splitMode ? splits.map((s) => ({ method: s.method, amount: s.amount })) : undefined,
+      paymentNote: paymentNotes.length > 0 ? paymentNotes.join(' | ') : undefined,
     });
 
     // Increment coupon usage if one was applied
     if (couponId) {
       void incrementCouponUsage(couponId);
-    }
-
-    // Auto-charge credit when paying with 'credito'
-    const creditAmount = splitMode
-      ? splits.filter((s) => s.method === 'credito').reduce((sum, s) => sum + s.amount, 0)
-      : method === 'credito' ? total : 0;
-
-    if (creditAmount > 0 && clienteId) {
-      try {
-        await cargoCredito.mutateAsync({
-          clienteId,
-          monto: creditAmount,
-          referencia: result.folioDisplay ?? String(result.folio),
-          concepto: `Venta ${result.folioDisplay ?? result.folio}`,
-          userId: user?.id,
-          userName: user?.email?.split('@')[0],
-        });
-      } catch (err) {
-        toast.error(`Venta registrada pero error en credito: ${(err as Error).message}`);
-      }
     }
 
     // Accumulate loyalty points
@@ -346,7 +347,7 @@ export function PaymentDialog({
                 {/* Payment method selector */}
                 <div>
                   <p className="mb-2 text-sm font-medium text-gray-700">Forma de Pago</p>
-                  <div className="grid grid-cols-6 gap-1">
+                  <div className="grid grid-cols-5 gap-1">
                     {PAYMENT_METHODS.map((pm) => (
                       <button
                         key={pm.id}
@@ -366,6 +367,32 @@ export function PaymentDialog({
                     ))}
                   </div>
                 </div>
+
+                {/* Trueque note */}
+                {method === 'trueque' && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">Descripcion del trueque</p>
+                    <Textarea
+                      placeholder="Describe que se recibio a cambio..."
+                      value={truequeNote}
+                      onChange={(e) => setTruequeNote(e.target.value)}
+                      className="h-20"
+                    />
+                  </div>
+                )}
+
+                {/* Regalo motivo */}
+                {method === 'regalo' && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">Motivo del regalo</p>
+                    <Textarea
+                      placeholder="Indica el motivo del regalo..."
+                      value={regaloMotivo}
+                      onChange={(e) => setRegaloMotivo(e.target.value)}
+                      className="h-20"
+                    />
+                  </div>
+                )}
 
                 {/* Cash payment details */}
                 {method === 'efectivo' && (
@@ -438,6 +465,58 @@ export function PaymentDialog({
                     </>
                   )}
                 </Button>
+                {/* CxC button — register sale, paid amount = what was received (or 0) */}
+                <Button
+                  variant="outline"
+                  className="h-10 w-full rounded-lg border-amber-300 text-amber-700 hover:bg-amber-50"
+                  disabled={createSale.isPending}
+                  onClick={async () => {
+                    const seller = user?.email?.split('@')[0] ?? 'cajero';
+                    const cliente = clienteName || 'Mostrador';
+                    // If user entered a partial amount, register it; otherwise 0
+                    const partialPaid = method === 'efectivo' ? (parseFloat(amountReceived) || 0) : 0;
+                    const actualMethod = partialPaid > 0 ? method : 'efectivo';
+                    try {
+                      const result = await createSale.mutateAsync({
+                        items,
+                        metodoPago: actualMethod,
+                        seller,
+                        cliente,
+                        cajaId,
+                        cajaSessionId,
+                        globalDiscountPct,
+                        paymentNote: partialPaid > 0
+                          ? `Cuenta por cobrar (pago parcial ${formatPrice(partialPaid)})`
+                          : 'Cuenta por cobrar',
+                      });
+                      // Register partial payment in nota_pagos if amount > 0
+                      if (partialPaid > 0 && result.notaId) {
+                        const supabaseModule = await import('@/integrations/supabase/client');
+                        await supabaseModule.supabase.from('nota_pagos' as never).insert({
+                          nota_id: result.notaId,
+                          monto: partialPaid,
+                          metodo_pago: actualMethod,
+                          nota: 'Pago parcial al registrar venta',
+                          created_by_name: seller,
+                        });
+                        await supabaseModule.supabase.from('notas' as never)
+                          .update({ pagado: partialPaid } as never)
+                          .eq('id' as never, result.notaId as never);
+                      }
+                      setResultFolio(result.folio);
+                      setResultFolioDisplay(result.folioDisplay ?? '');
+                      setResultEntregaToken(result.entregaToken ?? '');
+                      setUsedPayments([{ id: '1', method: actualMethod, amount: partialPaid }]);
+                      setStep('success');
+                    } catch (err) {
+                      toast.error((err as Error).message);
+                    }
+                  }}
+                >
+                  {received > 0 && received < total
+                    ? `Cobrar ${formatPrice(received)} y dejar resto en CxC`
+                    : 'Dejar como Cuenta por Cobrar'}
+                </Button>
               </>
             ) : (
               /* ===== SPLIT PAYMENT MODE ===== */
@@ -483,7 +562,7 @@ export function PaymentDialog({
                 {splitRemaining > 0.01 && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-gray-700">Agregar Pago</p>
-                    <div className="grid grid-cols-6 gap-1">
+                    <div className="grid grid-cols-5 gap-1">
                       {PAYMENT_METHODS.map((pm) => (
                         <button
                           key={pm.id}
@@ -526,6 +605,30 @@ export function PaymentDialog({
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
+                  </div>
+                )}
+
+                {/* Trueque/Regalo notes for split mode */}
+                {splits.some((s) => s.method === 'trueque') && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-gray-700">Descripcion del trueque</p>
+                    <Textarea
+                      placeholder="Describe que se recibio a cambio..."
+                      value={splitTruequeNote}
+                      onChange={(e) => setSplitTruequeNote(e.target.value)}
+                      className="h-16 text-sm"
+                    />
+                  </div>
+                )}
+                {splits.some((s) => s.method === 'regalo') && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-gray-700">Motivo del regalo</p>
+                    <Textarea
+                      placeholder="Indica el motivo del regalo..."
+                      value={splitRegaloMotivo}
+                      onChange={(e) => setSplitRegaloMotivo(e.target.value)}
+                      className="h-16 text-sm"
+                    />
                   </div>
                 )}
 

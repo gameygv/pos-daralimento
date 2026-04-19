@@ -71,7 +71,7 @@ export function useAlmacenes() {
       const { data, error } = (await supabase
         .from('almacenes' as never)
         .select('*')
-        .order('is_default' as never, { ascending: false })
+        .eq('is_active' as never, true as never)
         .order('nombre' as never)) as unknown as {
         data: AlmacenRow[] | null;
         error: { message: string } | null;
@@ -162,6 +162,167 @@ export function useAlmacenStock(almacenId: string | null) {
       }));
     },
     enabled: !!almacenId,
+  });
+}
+
+// ─── Precios de un producto en todos los almacenes ────────
+
+export function useProductAlmacenPrecios(productId: string | null) {
+  return useQuery<Array<{ almacen_id: string; precio_publico: number; precio_proveedores: number }>>({
+    queryKey: ['product-almacen-precios', productId],
+    queryFn: async () => {
+      if (!productId) return [];
+      const { data, error } = (await supabase
+        .from('almacen_precios' as never)
+        .select('almacen_id, precio_publico, precio_proveedores')
+        .eq('product_id' as never, productId as never)) as unknown as {
+        data: Array<{ almacen_id: string; precio_publico: number; precio_proveedores: number }> | null;
+        error: { message: string } | null;
+      };
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+    enabled: !!productId,
+  });
+}
+
+// ─── Precios por almacén ──────────────────────────────────
+
+export interface AlmacenPrecioRow {
+  id: string;
+  almacen_id: string;
+  product_id: string;
+  precio_publico: number;
+  precio_proveedores: number;
+}
+
+export interface AlmacenPrecioView extends AlmacenPrecioRow {
+  product_name: string;
+  sku: string;
+  base_price: number;
+  precio_mayoreo: number;
+}
+
+const ALMACEN_PRECIOS_KEY = ['almacen-precios'] as const;
+
+export function useAlmacenPrecios(almacenId: string | null) {
+  return useQuery<AlmacenPrecioView[]>({
+    queryKey: [...ALMACEN_PRECIOS_KEY, almacenId],
+    queryFn: async () => {
+      if (!almacenId) return [];
+
+      // Get all products (with their global prices)
+      const { data: products, error: prodErr } = (await supabase
+        .from('products' as never)
+        .select('id, name, sku, base_price, precio_mayoreo')
+        .eq('is_active' as never, true as never)
+        .order('name' as never)) as unknown as {
+        data: Array<{
+          id: string;
+          name: string;
+          sku: string;
+          base_price: number;
+          precio_mayoreo: number;
+        }> | null;
+        error: { message: string } | null;
+      };
+      if (prodErr) throw new Error(prodErr.message);
+
+      // Get existing almacen-specific prices
+      const { data: precios, error: precErr } = (await supabase
+        .from('almacen_precios' as never)
+        .select('*')
+        .eq('almacen_id' as never, almacenId as never)) as unknown as {
+        data: AlmacenPrecioRow[] | null;
+        error: { message: string } | null;
+      };
+      if (precErr) throw new Error(precErr.message);
+
+      const precioMap = new Map((precios ?? []).map((p) => [p.product_id, p]));
+
+      // Merge: show all products, with almacen price if exists, otherwise global
+      return (products ?? []).map((prod) => {
+        const ap = precioMap.get(prod.id);
+        return {
+          id: ap?.id ?? '',
+          almacen_id: almacenId,
+          product_id: prod.id,
+          precio_publico: ap?.precio_publico ?? prod.base_price,
+          precio_proveedores: ap?.precio_proveedores ?? prod.precio_mayoreo,
+          product_name: prod.name,
+          sku: prod.sku,
+          base_price: prod.base_price,
+          precio_mayoreo: prod.precio_mayoreo,
+        };
+      });
+    },
+    enabled: !!almacenId,
+  });
+}
+
+export function useUpsertAlmacenPrecio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      almacenId: string;
+      productId: string;
+      precioPublico: number;
+      precioProveedores: number;
+    }) => {
+      const { error } = (await supabase
+        .from('almacen_precios' as never)
+        .upsert({
+          almacen_id: params.almacenId,
+          product_id: params.productId,
+          precio_publico: params.precioPublico,
+          precio_proveedores: params.precioProveedores,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'almacen_id,product_id' } as never)) as unknown as {
+        error: { message: string } | null;
+      };
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ALMACEN_PRECIOS_KEY });
+    },
+  });
+}
+
+// ─── All product variants (for stock adjustment dropdown) ─────
+
+export interface ProductVariantOption {
+  variant_id: string;
+  product_id: string;
+  product_name: string;
+  sku: string;
+}
+
+const PRODUCT_VARIANTS_KEY = ['product-variants-all'] as const;
+
+export function useAllProductVariants() {
+  return useQuery<ProductVariantOption[]>({
+    queryKey: [...PRODUCT_VARIANTS_KEY],
+    queryFn: async () => {
+      const { data, error } = (await supabase
+        .from('product_variants' as never)
+        .select('id, sku, product_id, products(name)' as never)
+        .order('sku' as never)) as unknown as {
+        data: Array<{
+          id: string;
+          sku: string;
+          product_id: string;
+          products: { name: string };
+        }> | null;
+        error: { message: string } | null;
+      };
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((r) => ({
+        variant_id: r.id,
+        product_id: r.product_id,
+        product_name: r.products?.name ?? '',
+        sku: r.sku,
+      }));
+    },
   });
 }
 

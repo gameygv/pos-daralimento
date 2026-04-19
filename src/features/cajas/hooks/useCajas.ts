@@ -224,6 +224,78 @@ export function useMyActiveSession() {
   });
 }
 
+/**
+ * Auto-session: returns ANY open session on the single caja (shared across users).
+ * If no open session exists, automatically creates one.
+ * This replaces the CajaSelectionModal flow — the caja is always open.
+ */
+export function useAutoSession() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useQuery<CajaSession | null>({
+    queryKey: [...SESSIONS_KEY, 'auto'],
+    queryFn: async () => {
+      if (!user) return null;
+
+      // 1. Check for any open session (any user)
+      const { data: existing, error: sessErr } = (await supabase
+        .from('caja_sessions' as never)
+        .select('*')
+        .eq('status' as never, 'open' as never)
+        .limit(1)
+        .maybeSingle()) as unknown as {
+        data: CajaSession | null;
+        error: { message: string } | null;
+      };
+      if (sessErr) throw new Error(sessErr.message);
+      if (existing) {
+        setStoredSessionId(existing.id);
+        setStoredCajaId(existing.caja_id);
+        return existing;
+      }
+
+      // 2. No open session — get the first active caja and auto-open
+      const { data: cajas, error: cajaErr } = (await supabase
+        .from('cajas' as never)
+        .select('*')
+        .eq('is_active' as never, true as never)
+        .order('nombre')
+        .limit(1)) as unknown as {
+        data: CajaRow[] | null;
+        error: { message: string } | null;
+      };
+      if (cajaErr) throw new Error(cajaErr.message);
+      if (!cajas || cajas.length === 0) return null;
+
+      const caja = cajas[0];
+      const { data: newSession, error: openErr } = (await supabase
+        .from('caja_sessions' as never)
+        .insert({
+          caja_id: caja.id,
+          user_id: user.id,
+          user_name: user.email?.split('@')[0] ?? 'Usuario',
+          monto_apertura: 0,
+          status: 'open',
+        } as never)
+        .select()
+        .single()) as unknown as {
+        data: CajaSession | null;
+        error: { message: string } | null;
+      };
+      if (openErr) throw new Error(openErr.message);
+      if (newSession) {
+        setStoredSessionId(newSession.id);
+        setStoredCajaId(newSession.caja_id);
+        void queryClient.invalidateQueries({ queryKey: SESSIONS_KEY });
+      }
+      return newSession;
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+}
+
 /** Open a caja session */
 export function useOpenCaja() {
   const queryClient = useQueryClient();

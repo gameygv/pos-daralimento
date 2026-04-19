@@ -25,18 +25,11 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 export type UserRole = 'admin' | 'gerente' | 'vendedor';
 
-/** Default permissions by role */
+/** All users have all permissions (DAR Alimento — everyone is admin) */
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  admin: Object.values(PERMISSIONS), // everything
-  gerente: [
-    'pos', 'clientes', 'corte',
-    'productos', 'categorias', 'inventario', 'almacenes',
-    'reportes', 'cajas', 'cupones', 'devoluciones',
-    'cxc', 'gastos', 'creditos', 'etiquetas',
-  ],
-  vendedor: [
-    'pos', 'clientes', 'corte',
-  ],
+  admin: Object.values(PERMISSIONS),
+  gerente: Object.values(PERMISSIONS),
+  vendedor: Object.values(PERMISSIONS),
 };
 
 /** Get permissions for a role */

@@ -6,8 +6,6 @@ import {
   CreditCard,
   MessageSquare,
   PlusCircle,
-  Ticket,
-  Truck,
   Pause,
   ArrowLeft,
   MapPin,
@@ -25,8 +23,7 @@ import {
 } from '@/components/ui/popover';
 import type { CartItem, CartTotals } from '../types';
 import { ClientSelector } from './ClientSelector';
-import type { SelectedClient, HeldCart, AppliedCoupon } from '../hooks/useCart';
-import { validateCoupon } from '@/features/cupones/hooks/useCupones';
+import type { SelectedClient, HeldCart } from '../hooks/useCart';
 import { toast } from 'sonner';
 
 function formatPrice(amount: number): string {
@@ -46,16 +43,12 @@ interface CartProps {
   selectedClient: SelectedClient | null;
   globalDiscountPct: number;
   heldCarts: HeldCart[];
-  appliedCoupon: AppliedCoupon | null;
   onSelectClient: (client: SelectedClient | null) => void;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
   onSetItemDiscount: (itemId: string, pct: number) => void;
   onSetGlobalDiscount: (pct: number) => void;
-  onApplyCoupon: (coupon: AppliedCoupon | null) => void;
   onSetItemNote: (itemId: string, note: string) => void;
-  shippingFee: number;
-  onSetShippingFee: (fee: number) => void;
   onClear: () => void;
   onHoldCart: () => void;
   onRestoreCart: (cartId: string) => void;
@@ -71,16 +64,12 @@ export function Cart({
   selectedClient,
   globalDiscountPct,
   heldCarts,
-  appliedCoupon,
   onSelectClient,
   onUpdateQuantity,
   onRemoveItem,
   onSetItemDiscount,
   onSetGlobalDiscount,
-  onApplyCoupon,
   onSetItemNote,
-  shippingFee,
-  onSetShippingFee,
   onClear,
   onHoldCart,
   onRestoreCart,
@@ -91,29 +80,6 @@ export function Cart({
 }: CartProps) {
   const [activeTab, setActiveTab] = useState<CartTab>('cart');
   const [discountItemId, setDiscountItemId] = useState<string | null>(null);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponLoading, setCouponLoading] = useState(false);
-
-  async function handleApplyCoupon() {
-    if (!couponCode.trim()) return;
-    setCouponLoading(true);
-    const result = await validateCoupon(couponCode, totals.subtotal);
-    setCouponLoading(false);
-    if (result.valid) {
-      onApplyCoupon({
-        id: result.cupon.id,
-        codigo: result.cupon.codigo,
-        tipo: result.cupon.tipo,
-        valor: result.cupon.valor,
-        discountAmount: result.discount,
-      });
-      setCouponCode('');
-      toast.success(`Cupon ${result.cupon.codigo} aplicado: -$${result.discount.toFixed(2)}`);
-    } else {
-      toast.error(result.reason);
-    }
-  }
-
   return (
     <div className="flex h-full w-full flex-col border-l bg-white">
       {/* Tab header */}
@@ -313,23 +279,10 @@ export function Cart({
               </div>
               {totals.discount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-orange-600">
-                    Descuento
-                    {appliedCoupon ? ` + ${appliedCoupon.codigo}` : ''}
-                  </span>
+                  <span className="text-orange-600">Descuento</span>
                   <span className="font-medium text-orange-600">-{formatPrice(totals.discount)}</span>
                 </div>
               )}
-              {totals.shipping > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-indigo-600">Envio</span>
-                  <span className="font-medium text-indigo-600">+{formatPrice(totals.shipping)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">IVA</span>
-                <span className="font-medium">{formatPrice(totals.tax)}</span>
-              </div>
               <div className="flex justify-between pt-1 text-lg font-bold text-teal-700">
                 <span>TOTAL</span>
                 <span>{formatPrice(totals.total)}</span>
@@ -337,7 +290,7 @@ export function Cart({
             </div>
 
             {/* Action buttons */}
-            <div className="grid grid-cols-3 gap-1 border-t px-2 py-2 sm:grid-cols-5">
+            <div className="grid grid-cols-3 gap-1 border-t px-2 py-2">
               <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -432,116 +385,6 @@ export function Cart({
                 </PopoverContent>
               </Popover>
 
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className={`flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-md px-1 py-2 ${
-                      appliedCoupon
-                        ? 'bg-green-50 text-green-600'
-                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                  >
-                    <Ticket className="h-4 w-4" />
-                    <span className="text-[10px] font-medium leading-tight">
-                      {appliedCoupon ? appliedCoupon.codigo : 'Cupon'}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-3" align="center">
-                  {appliedCoupon ? (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-green-700">
-                        Cupon aplicado: {appliedCoupon.codigo}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {appliedCoupon.tipo === 'porcentaje'
-                          ? `${appliedCoupon.valor}% descuento`
-                          : `$${appliedCoupon.valor} descuento`}
-                      </p>
-                      <button
-                        className="text-xs text-red-500 hover:underline"
-                        onClick={() => onApplyCoupon(null)}
-                      >
-                        Quitar cupon
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-gray-700">Aplicar cupon</p>
-                      <Input
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        placeholder="CODIGO..."
-                        className="h-8 font-mono text-xs"
-                        onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                      />
-                      <Button
-                        size="sm"
-                        className="h-8 w-full text-xs"
-                        onClick={handleApplyCoupon}
-                        disabled={couponLoading || !couponCode.trim()}
-                      >
-                        {couponLoading ? 'Validando...' : 'Aplicar'}
-                      </Button>
-                    </div>
-                  )}
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className={`flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-md px-1 py-2 ${
-                      shippingFee > 0
-                        ? 'bg-indigo-50 text-indigo-600'
-                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                    }`}
-                  >
-                    <Truck className="h-4 w-4" />
-                    <span className="text-[10px] font-medium leading-tight">
-                      {shippingFee > 0 ? `$${shippingFee}` : 'Envio'}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-52 p-3" align="center">
-                  <p className="mb-2 text-xs font-semibold text-gray-700">Cargo de envio</p>
-                  <div className="grid grid-cols-3 gap-1 mb-2">
-                    {[50, 100, 150].map((amt) => (
-                      <button
-                        key={amt}
-                        onClick={() => onSetShippingFee(shippingFee === amt ? 0 : amt)}
-                        className={`rounded border px-2 py-1.5 text-xs font-semibold ${
-                          shippingFee === amt
-                            ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
-                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        ${amt}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      placeholder="Otro $"
-                      className="h-8 text-xs"
-                      defaultValue={shippingFee || ''}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const val = parseFloat((e.target as HTMLInputElement).value) || 0;
-                          onSetShippingFee(Math.max(0, val));
-                        }
-                      }}
-                    />
-                    <button
-                      className="text-xs text-red-500 hover:underline whitespace-nowrap"
-                      onClick={() => onSetShippingFee(0)}
-                    >
-                      Quitar
-                    </button>
-                  </div>
-                </PopoverContent>
-              </Popover>
               <button
                 className={`relative flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-md px-1 py-2 ${
                   items.length === 0
@@ -552,7 +395,7 @@ export function Cart({
                 disabled={items.length === 0}
               >
                 <Pause className="h-4 w-4" />
-                <span className="text-[10px] font-medium leading-tight">Suspender</span>
+                <span className="text-[10px] font-medium leading-tight">Apartar</span>
                 {heldCarts.length > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-purple-600 px-0.5 text-[9px] font-bold text-white">
                     {heldCarts.length}

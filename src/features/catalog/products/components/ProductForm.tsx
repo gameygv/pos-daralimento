@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -13,13 +13,52 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { productFormSchema, PRODUCT_TYPE_CONFIG, type ProductFormValues } from '../schemas/product.schema';
+import { productFormSchema, type ProductFormValues } from '../schemas/product.schema';
 import { useProductById, useCreateProduct, useUpdateProduct } from '../hooks/useProducts';
 import { useCategoryList } from '@/features/catalog/categories';
 import { slugify } from '@/features/catalog/categories/utils/slugify';
-import { VariantManager } from '@/features/catalog/variants/components/VariantManager';
 import { ImageUpload } from '@/components/ImageUpload';
-import type { ProductType, ProductInsert } from '@/integrations/supabase/catalog-types';
+import type { ProductInsert } from '@/integrations/supabase/catalog-types';
+import { useAlmacenes, useProductAlmacenPrecios, useUpsertAlmacenPrecio, useAdjustAlmacenStock } from '@/features/almacenes/hooks/useAlmacenes';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/features/auth/AuthProvider';
+import { toast } from 'sonner';
+
+function useProductAlmacenStock(productId: string | null) {
+  return useQuery<Array<{ almacen_id: string; stock: number }>>({
+    queryKey: ['product-almacen-stock', productId],
+    queryFn: async () => {
+      if (!productId) return [];
+      const { data, error } = (await supabase
+        .from('almacen_stock' as never)
+        .select('almacen_id, stock, product_variants!inner(product_id)')
+        .eq('product_variants.product_id' as never, productId as never)) as unknown as {
+        data: Array<{ almacen_id: string; stock: number }> | null;
+        error: { message: string } | null;
+      };
+      if (error) {
+        // Fallback: query via variant
+        const { data: variant } = (await supabase
+          .from('product_variants' as never)
+          .select('id')
+          .eq('product_id' as never, productId as never)
+          .limit(1)
+          .single()) as unknown as { data: { id: string } | null };
+        if (!variant) return [];
+        const { data: stocks } = (await supabase
+          .from('almacen_stock' as never)
+          .select('almacen_id, stock')
+          .eq('variant_id' as never, variant.id as never)) as unknown as {
+          data: Array<{ almacen_id: string; stock: number }> | null;
+        };
+        return stocks ?? [];
+      }
+      return data ?? [];
+    },
+    enabled: !!productId,
+  });
+}
 
 interface ProductFormProps {
   open: boolean;
@@ -37,6 +76,13 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
   const isEditing = productId !== null;
   const { data: existingProduct } = useProductById(isEditing ? productId : null);
   const { data: categories = [] } = useCategoryList();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: almacenes = [] } = useAlmacenes();
+  const { data: productPrecios = [] } = useProductAlmacenPrecios(isEditing ? productId : null);
+  const { data: productStocks = [] } = useProductAlmacenStock(isEditing ? productId : null);
+  const upsertPrecio = useUpsertAlmacenPrecio();
+  const adjustStock = useAdjustAlmacenStock();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
 
@@ -104,6 +150,34 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
     }
   }, [open, isEditing, existingProduct, form]);
 
+  // Multi-category state
+  const [selectedCatIds, setSelectedCatIds] = useState<Set<string>>(new Set());
+
+  // Load existing product categories on edit
+  useEffect(() => {
+    if (open && isEditing && productId) {
+      supabase
+        .from('product_categories' as never)
+        .select('category_id')
+        .eq('product_id' as never, productId as never)
+        .then(({ data }) => {
+          const rows = (data ?? []) as Array<{ category_id: string }>;
+          setSelectedCatIds(new Set(rows.map((r) => r.category_id)));
+        });
+    } else if (open && !isEditing) {
+      setSelectedCatIds(new Set());
+    }
+  }, [open, isEditing, productId]);
+
+  function toggleCategory(catId: string) {
+    setSelectedCatIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(catId)) next.delete(catId);
+      else next.add(catId);
+      return next;
+    });
+  }
+
   // Auto-generate slug and SKU from name (only when creating)
   const watchName = form.watch('name');
   useEffect(() => {
@@ -135,11 +209,29 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
       : null;
 
   async function onSubmit(values: ProductFormValues) {
+    // Set primary category_id to first selected category (for backwards compat)
+    const catArray = [...selectedCatIds];
+    values.category_id = catArray[0] ?? null;
+
+    let savedProductId = productId;
     if (isEditing && productId) {
       await updateMutation.mutateAsync({ id: productId, ...values } as { id: string } & Partial<ProductInsert>);
     } else {
-      await createMutation.mutateAsync(values as ProductInsert);
+      const result = await createMutation.mutateAsync(values as ProductInsert);
+      savedProductId = (result as { id: string } | null)?.id ?? null;
     }
+
+    // Save multi-categories
+    if (savedProductId) {
+      // Delete existing and re-insert
+      await supabase.from('product_categories' as never).delete().eq('product_id' as never, savedProductId as never);
+      if (catArray.length > 0) {
+        await supabase.from('product_categories' as never).insert(
+          catArray.map((cid) => ({ product_id: savedProductId, category_id: cid }))
+        );
+      }
+    }
+
     onOpenChange(false);
   }
 
@@ -191,52 +283,44 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
 
           <Separator />
 
-          {/* Section 2: Type & Category */}
+          {/* Section 2: Categories (multi-select) */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Clasificación
+              Categorías
             </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="product_type">Tipo de producto</Label>
-                <Select
-                  value={form.watch('product_type')}
-                  onValueChange={(val) => form.setValue('product_type', val as ProductFormValues['product_type'])}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.entries(PRODUCT_TYPE_CONFIG) as [ProductType, { label: string; color: string }][]).map(
-                      ([type, config]) => (
-                        <SelectItem key={type} value={type}>
-                          {config.label}
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category_id">Categoría</Label>
-                <Select
-                  value={form.watch('category_id') ?? NONE_VALUE}
-                  onValueChange={(val) => form.setValue('category_id', val === NONE_VALUE ? null : val)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sin categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE_VALUE}>Sin categoría</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="max-h-[200px] overflow-y-auto rounded border p-2 space-y-1">
+              {categories
+                .filter((c) => !c.parent_id)
+                .map((parent) => (
+                  <div key={parent.id}>
+                    <label className="flex items-center gap-2 rounded px-2 py-1 text-sm font-semibold hover:bg-muted/50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-teal-600"
+                        checked={selectedCatIds.has(parent.id)}
+                        onChange={() => toggleCategory(parent.id)}
+                      />
+                      {parent.name}
+                    </label>
+                    {categories
+                      .filter((c) => c.parent_id === parent.id)
+                      .map((child) => (
+                        <label key={child.id} className="flex items-center gap-2 rounded px-2 py-1 pl-7 text-sm hover:bg-muted/50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-teal-600"
+                            checked={selectedCatIds.has(child.id)}
+                            onChange={() => toggleCategory(child.id)}
+                          />
+                          {child.name}
+                        </label>
+                      ))}
+                  </div>
+                ))}
             </div>
+            {selectedCatIds.size > 0 && (
+              <p className="text-xs text-muted-foreground">{selectedCatIds.size} categoría{selectedCatIds.size !== 1 ? 's' : ''} seleccionada{selectedCatIds.size !== 1 ? 's' : ''}</p>
+            )}
           </div>
 
           <Separator />
@@ -266,14 +350,14 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="precio_mayoreo">Precio Mayoreo</Label>
+                <Label htmlFor="precio_mayoreo">Precio Proveedores</Label>
                 <Input
                   id="precio_mayoreo"
                   type="number"
                   step="0.01"
                   min="0"
                   {...form.register('precio_mayoreo')}
-                  placeholder="0 = sin precio mayoreo"
+                  placeholder="0 = sin precio proveedores"
                 />
                 {form.formState.errors.precio_mayoreo && (
                   <p className="text-sm text-destructive">{form.formState.errors.precio_mayoreo.message}</p>
@@ -285,31 +369,139 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cost">Costo</Label>
-                <Input
-                  id="cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...form.register('cost')}
-                  placeholder="Opcional"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tax_rate">Tasa de impuesto</Label>
-                <Input
-                  id="tax_rate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="1"
-                  {...form.register('tax_rate')}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="cost">Costo</Label>
+              <Input
+                id="cost"
+                type="number"
+                step="0.01"
+                min="0"
+                {...form.register('cost')}
+                placeholder="Opcional"
+              />
             </div>
           </div>
+
+          {/* Section: Precios por Punto de Venta (edit mode only) */}
+          {isEditing && productId && almacenes.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Inventario y Precios por Punto de Venta
+                </h3>
+                <div className="rounded border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-3 py-1.5 text-left text-xs font-medium">Punto de Venta</th>
+                        <th className="px-3 py-1.5 text-center text-xs font-medium">Stock</th>
+                        <th className="px-3 py-1.5 text-right text-xs font-medium">P. Publico</th>
+                        <th className="px-3 py-1.5 text-right text-xs font-medium">P. Proveedores</th>
+                        <th className="px-3 py-1.5 w-20"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {almacenes.map((alm) => {
+                        const existingPrecio = productPrecios.find((p) => p.almacen_id === alm.id);
+                        const existingStock = productStocks.find((s) => s.almacen_id === alm.id);
+                        return (
+                          <tr key={alm.id}>
+                            <td className="px-3 py-1.5 font-medium text-xs">{alm.nombre}</td>
+                            <td className="px-3 py-1.5 text-center">
+                              <Input
+                                type="number"
+                                min="0"
+                                className="mx-auto h-7 w-16 text-center text-xs"
+                                defaultValue={existingStock?.stock ?? 0}
+                                id={`alm-stock-${alm.id}`}
+                              />
+                            </td>
+                            <td className="px-3 py-1.5">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                className="ml-auto h-7 w-24 text-right text-xs"
+                                defaultValue={existingPrecio?.precio_publico ?? 0}
+                                id={`alm-pub-${alm.id}`}
+                              />
+                            </td>
+                            <td className="px-3 py-1.5">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                className="ml-auto h-7 w-24 text-right text-xs"
+                                defaultValue={existingPrecio?.precio_proveedores ?? 0}
+                                id={`alm-prov-${alm.id}`}
+                              />
+                            </td>
+                            <td className="px-3 py-1.5">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-teal-700"
+                                onClick={async () => {
+                                  const pubEl = document.getElementById(`alm-pub-${alm.id}`) as HTMLInputElement;
+                                  const provEl = document.getElementById(`alm-prov-${alm.id}`) as HTMLInputElement;
+                                  const stockEl = document.getElementById(`alm-stock-${alm.id}`) as HTMLInputElement;
+                                  try {
+                                    // Save prices
+                                    await upsertPrecio.mutateAsync({
+                                      almacenId: alm.id,
+                                      productId: productId!,
+                                      precioPublico: parseFloat(pubEl?.value) || 0,
+                                      precioProveedores: parseFloat(provEl?.value) || 0,
+                                    });
+                                    // Save stock: get variant, upsert almacen_stock
+                                    const newStock = parseInt(stockEl?.value) || 0;
+                                    const { data: variant } = await supabase
+                                      .from('product_variants' as never)
+                                      .select('id')
+                                      .eq('product_id' as never, productId as never)
+                                      .limit(1)
+                                      .single() as unknown as { data: { id: string } | null };
+                                    if (variant) {
+                                      await supabase
+                                        .from('almacen_stock' as never)
+                                        .upsert({
+                                          almacen_id: alm.id,
+                                          variant_id: variant.id,
+                                          stock: newStock,
+                                        }, { onConflict: 'almacen_id,variant_id' } as never);
+                                      // Update total variant stock
+                                      const { data: allStocks } = await supabase
+                                        .from('almacen_stock' as never)
+                                        .select('stock')
+                                        .eq('variant_id' as never, variant.id as never) as unknown as { data: { stock: number }[] | null };
+                                      const totalStock = (allStocks ?? []).reduce((s, r) => s + r.stock, 0);
+                                      await supabase
+                                        .from('product_variants' as never)
+                                        .update({ stock: totalStock })
+                                        .eq('id' as never, variant.id as never);
+                                    }
+                                    void queryClient.invalidateQueries({ queryKey: ['product-almacen-stock'] });
+                                    void queryClient.invalidateQueries({ queryKey: ['product-stock'] });
+                                    toast.success(`${alm.nombre}: stock y precios guardados`);
+                                  } catch (err) {
+                                    toast.error((err as Error).message);
+                                  }
+                                }}
+                              >
+                                Guardar
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
 
           <Separator />
 
@@ -319,7 +511,10 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
               Configuración
             </h3>
             <div className="flex items-center justify-between">
-              <Label htmlFor="track_stock">Rastrear inventario</Label>
+              <div>
+                <Label htmlFor="track_stock">Usar inventario</Label>
+                <p className="text-xs text-muted-foreground">Si esta apagado, se puede vender sin existencia</p>
+              </div>
               <Switch
                 id="track_stock"
                 checked={form.watch('track_stock')}
@@ -361,17 +556,6 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
               />
             </div>
           </div>
-
-          {/* Section 6: Variants (edit mode only) */}
-          {isEditing && productId && (
-            <>
-              <Separator />
-              <VariantManager
-                productId={productId}
-                productSku={form.watch('sku')}
-              />
-            </>
-          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -86,12 +86,21 @@ export function CategoryForm({ open, onOpenChange, category }: CategoryFormProps
   }, [watchName, isEditing, form]);
 
   async function onSubmit(values: CategoryFormValues) {
-    if (isEditing) {
-      await updateMutation.mutateAsync({ id: category.id, ...values });
-    } else {
-      await createMutation.mutateAsync(values);
+    try {
+      if (isEditing) {
+        await updateMutation.mutateAsync({ id: category.id, ...values });
+      } else {
+        await createMutation.mutateAsync(values);
+      }
+      onOpenChange(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? 'Error al guardar';
+      if (msg.includes('categories_slug_key') || msg.includes('duplicate key')) {
+        form.setError('slug', { message: 'Este slug ya existe. Usa uno diferente.' });
+      } else {
+        form.setError('root', { message: msg });
+      }
     }
-    onOpenChange(false);
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -107,6 +116,9 @@ export function CategoryForm({ open, onOpenChange, category }: CategoryFormProps
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {form.formState.errors.root && (
+            <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+          )}
           <div className="space-y-2">
             <Label htmlFor="name">Nombre</Label>
             <Input id="name" {...form.register('name')} placeholder="Ej: Bowls de cerámica" />

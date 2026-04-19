@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -73,6 +74,7 @@ export default function App() {
   }
 
   return (
+    <ErrorBoundary>
     <ThemeProvider defaultTheme="system" storageKey="pos-theme">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
@@ -152,5 +154,6 @@ export default function App() {
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   );
 }

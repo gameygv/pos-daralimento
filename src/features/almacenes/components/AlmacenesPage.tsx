@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Warehouse, Plus, Package, ArrowRightLeft, ScrollText } from 'lucide-react';
+import { Warehouse, Plus, Package, ArrowRightLeft, ScrollText, DollarSign, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,13 +14,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import {
   useAlmacenes, useCreateAlmacen, useUpdateAlmacen,
-  useAlmacenStock, useKardex, useAdjustAlmacenStock,
-  useCreateTransferencia,
+  useAlmacenStock, useAllProductVariants, useKardex, useAdjustAlmacenStock,
+  useCreateTransferencia, useAlmacenPrecios, useUpsertAlmacenPrecio,
   type AlmacenRow, type KardexFilter,
 } from '../hooks/useAlmacenes';
 import { useAuth } from '@/features/auth/AuthProvider';
 
-type Tab = 'stock' | 'kardex' | 'transferir';
+type Tab = 'stock' | 'precios' | 'kardex' | 'transferir';
 
 const KARDEX_TIPOS = [
   { value: '', label: 'Todos' },
@@ -78,7 +78,14 @@ export function AlmacenesPage() {
   const [adjComentario, setAdjComentario] = useState('');
 
   const { data: stockData = [] } = useAlmacenStock(selectedAlmacen);
+  const { data: allVariants = [] } = useAllProductVariants();
   const { data: kardexData = [] } = useKardex(kardexFilter);
+  const { data: preciosData = [] } = useAlmacenPrecios(selectedAlmacen);
+  const upsertPrecio = useUpsertAlmacenPrecio();
+
+  // Track edited prices locally before saving
+  const [editedPrecios, setEditedPrecios] = useState<Record<string, { publico: number; proveedores: number }>>({});
+  const [precioFilter, setPrecioFilter] = useState('');
 
   const selected = almacenes.find((a) => a.id === selectedAlmacen);
 
@@ -196,6 +203,13 @@ export function AlmacenesPage() {
                   <Package className="mr-1 h-4 w-4" /> Stock
                 </Button>
                 <Button
+                  variant={activeTab === 'precios' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActiveTab('precios')}
+                >
+                  <DollarSign className="mr-1 h-4 w-4" /> Precios
+                </Button>
+                <Button
                   variant={activeTab === 'kardex' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setActiveTab('kardex')}
@@ -254,6 +268,127 @@ export function AlmacenesPage() {
                             </td>
                           </tr>
                         ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'precios' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Buscar producto..."
+                    value={precioFilter}
+                    onChange={(e) => setPrecioFilter(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  {Object.keys(editedPrecios).length > 0 && (
+                    <Button
+                      size="sm"
+                      disabled={upsertPrecio.isPending}
+                      onClick={async () => {
+                        try {
+                          for (const [productId, prices] of Object.entries(editedPrecios)) {
+                            await upsertPrecio.mutateAsync({
+                              almacenId: selectedAlmacen!,
+                              productId,
+                              precioPublico: prices.publico,
+                              precioProveedores: prices.proveedores,
+                            });
+                          }
+                          setEditedPrecios({});
+                          toast.success(`Precios actualizados (${Object.keys(editedPrecios).length} productos)`);
+                        } catch (err) {
+                          toast.error((err as Error).message);
+                        }
+                      }}
+                    >
+                      {upsertPrecio.isPending ? (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-1 h-4 w-4" />
+                      )}
+                      Guardar {Object.keys(editedPrecios).length} cambio{Object.keys(editedPrecios).length !== 1 ? 's' : ''}
+                    </Button>
+                  )}
+                </div>
+                {preciosData.length === 0 ? (
+                  <p className="py-8 text-center text-muted-foreground">
+                    No hay productos activos para configurar precios.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto rounded-lg border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-medium">SKU</th>
+                          <th className="px-3 py-2 text-left font-medium">Producto</th>
+                          <th className="px-3 py-2 text-right font-medium">P. Global</th>
+                          <th className="px-3 py-2 text-right font-medium">Precio Público</th>
+                          <th className="px-3 py-2 text-right font-medium">Precio Proveedores</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {preciosData
+                          .filter((p) => {
+                            if (!precioFilter) return true;
+                            const q = precioFilter.toLowerCase();
+                            return p.product_name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+                          })
+                          .map((p) => {
+                            const edited = editedPrecios[p.product_id];
+                            const publico = edited?.publico ?? p.precio_publico;
+                            const proveedores = edited?.proveedores ?? p.precio_proveedores;
+                            return (
+                              <tr key={p.product_id} className="hover:bg-muted/30">
+                                <td className="px-3 py-2 font-mono text-xs">{p.sku}</td>
+                                <td className="px-3 py-2">{p.product_name}</td>
+                                <td className="px-3 py-2 text-right text-xs text-muted-foreground">
+                                  ${p.base_price.toFixed(2)}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    className="ml-auto h-7 w-28 text-right text-xs"
+                                    value={publico}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0;
+                                      setEditedPrecios((prev) => ({
+                                        ...prev,
+                                        [p.product_id]: {
+                                          publico: val,
+                                          proveedores: prev[p.product_id]?.proveedores ?? p.precio_proveedores,
+                                        },
+                                      }));
+                                    }}
+                                  />
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    className="ml-auto h-7 w-28 text-right text-xs"
+                                    value={proveedores}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0;
+                                      setEditedPrecios((prev) => ({
+                                        ...prev,
+                                        [p.product_id]: {
+                                          publico: prev[p.product_id]?.publico ?? p.precio_publico,
+                                          proveedores: val,
+                                        },
+                                      }));
+                                    }}
+                                  />
+                                </td>
+                              </tr>
+                            );
+                          })}
                       </tbody>
                     </table>
                   </div>
@@ -416,17 +551,20 @@ export function AlmacenesPage() {
                 value={adjVariant}
                 onValueChange={(v) => {
                   setAdjVariant(v);
-                  const item = stockData.find((s) => s.variant_id === v);
+                  const item = allVariants.find((s) => s.variant_id === v);
                   setAdjProduct(item?.product_id ?? '');
                 }}
               >
                 <SelectTrigger><SelectValue placeholder="Selecciona producto" /></SelectTrigger>
                 <SelectContent>
-                  {stockData.map((s) => (
-                    <SelectItem key={s.variant_id} value={s.variant_id}>
-                      {s.product_name} ({s.sku}) - Stock: {s.stock}
-                    </SelectItem>
-                  ))}
+                  {allVariants.map((v) => {
+                    const existing = stockData.find((s) => s.variant_id === v.variant_id);
+                    return (
+                      <SelectItem key={v.variant_id} value={v.variant_id}>
+                        {v.product_name} ({v.sku}){existing ? ` - Stock: ${existing.stock}` : ''}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>

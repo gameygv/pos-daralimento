@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getNextCajaFolio } from '@/features/cajas/hooks/useCajas';
 import type { CartItem } from '../types';
 
-export type MetodoPago = 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'otros' | 'regalo';
+export type MetodoPago = 'efectivo' | 'tarjeta' | 'transferencia' | 'trueque' | 'regalo';
 
 interface SplitPaymentEntry {
   method: MetodoPago;
@@ -19,6 +19,7 @@ interface CreateSaleParams {
   cajaSessionId?: string | null;
   globalDiscountPct?: number;
   splitPayments?: SplitPaymentEntry[];
+  paymentNote?: string;
 }
 
 interface SaleResult {
@@ -34,7 +35,7 @@ export function useCreateSale() {
   const queryClient = useQueryClient();
 
   return useMutation<SaleResult, Error, CreateSaleParams>({
-    mutationFn: async ({ items, metodoPago, seller, cliente, cajaId, cajaSessionId, globalDiscountPct = 0, splitPayments }) => {
+    mutationFn: async ({ items, metodoPago, seller, cliente, cajaId, cajaSessionId, globalDiscountPct = 0, splitPayments, paymentNote }) => {
       let nextFolio: number;
       let folioDisplay: string;
 
@@ -157,6 +158,7 @@ export function useCreateSale() {
           metodo_pago: metodoPagoStr,
           pago_status: 'pendiente',
           entrega_status: 'sin_entregar',
+          ...(paymentNote ? { notas_pago: paymentNote } : {}),
           ...(cajaId ? { caja_id: cajaId } : {}),
           ...(cajaSessionId ? { caja_session_id: cajaSessionId } : {}),
         } as never)

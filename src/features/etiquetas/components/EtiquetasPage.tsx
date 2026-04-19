@@ -16,7 +16,9 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { usePosProducts, type PosProduct } from '@/features/pos/hooks/usePosProducts';
-import { useInventoryMovements } from '@/features/inventory/hooks/useInventory';
+import { useAlmacenes } from '@/features/almacenes/hooks/useAlmacenes';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 function formatPrice(n: number) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
@@ -39,40 +41,74 @@ export function EtiquetasPage() {
   const [showPrice, setShowPrice] = useState(true);
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Filtro por rango de fechas de movimientos de inventario
+  // Filtro por rango de fechas y almacén
   const [filterMode, setFilterMode] = useState<'search' | 'inventory'>('search');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
-  const [movementType, setMovementType] = useState<string>(ALL_VALUE);
+  const [almacenFilter, setAlmacenFilter] = useState<string>(ALL_VALUE);
 
   const { data: products = [] } = usePosProducts({ query: search || null });
+  const { data: almacenes = [] } = useAlmacenes();
 
-  // Buscar movimientos de inventario en el rango de fechas (solo en modo inventario)
-  const { data: movements = [] } = useInventoryMovements({
-    movementType: movementType === ALL_VALUE ? null : movementType,
-    fechaDesde: fechaDesde || null,
-    fechaHasta: fechaHasta || null,
-    enabled: filterMode === 'inventory',
-  });
+  // Query products by creation date + almacén stock
+  const { data: inventoryProducts = [] } = useQuery<Array<{ id: string; name: string; sku: string; base_price: number; almacen_nombre: string }>>({
+    queryKey: ['etiquetas-inventory', fechaDesde, fechaHasta, almacenFilter],
+    queryFn: async () => {
+      if (!fechaDesde && !fechaHasta) return [];
 
-  // Productos únicos encontrados en movimientos de inventario
-  const inventoryProducts = useMemo(() => {
-    if (filterMode !== 'inventory' || movements.length === 0) return [];
-    const seen = new Map<string, { id: string; name: string; sku: string }>();
-    for (const m of movements) {
-      if (!seen.has(m.product_id)) {
-        seen.set(m.product_id, {
-          id: m.product_id,
-          name: m.product_name ?? 'Desconocido',
-          sku: m.product_sku ?? '',
-        });
+      // Build date range for products.created_at
+      let query = supabase
+        .from('products' as never)
+        .select('id, name, sku, base_price, created_at')
+        .eq('is_active' as never, true as never)
+        .order('name' as never);
+
+      if (fechaDesde) {
+        query = query.gte('created_at' as never, fechaDesde as never);
       }
-    }
-    return Array.from(seen.values());
-  }, [movements, filterMode]);
+      if (fechaHasta) {
+        query = query.lte('created_at' as never, fechaHasta as never);
+      }
 
-  // Productos a mostrar en la lista
-  const displayProducts = filterMode === 'search' ? products : [];
+      const { data: prods, error } = (await query) as unknown as {
+        data: Array<{ id: string; name: string; sku: string; base_price: number; created_at: string }> | null;
+        error: { message: string } | null;
+      };
+      if (error) throw new Error(error.message);
+      if (!prods || prods.length === 0) return [];
+
+      // If almacén filter is set, only include products that have stock in that almacén
+      if (almacenFilter !== ALL_VALUE) {
+        const productIds = prods.map((p) => p.id);
+        const { data: variantData } = (await supabase
+          .from('product_variants' as never)
+          .select('id, product_id')
+          .in('product_id' as never, productIds as never)) as unknown as {
+          data: Array<{ id: string; product_id: string }> | null;
+        };
+        const variantIds = (variantData ?? []).map((v) => v.id);
+        const variantToProduct = new Map((variantData ?? []).map((v) => [v.id, v.product_id]));
+
+        const { data: stockData } = (await supabase
+          .from('almacen_stock' as never)
+          .select('variant_id, stock')
+          .eq('almacen_id' as never, almacenFilter as never)
+          .in('variant_id' as never, variantIds as never)
+          .gt('stock' as never, 0 as never)) as unknown as {
+          data: Array<{ variant_id: string; stock: number }> | null;
+        };
+
+        const productIdsWithStock = new Set((stockData ?? []).map((s) => variantToProduct.get(s.variant_id)).filter(Boolean));
+        const almName = almacenes.find((a) => a.id === almacenFilter)?.nombre ?? '';
+        return prods
+          .filter((p) => productIdsWithStock.has(p.id))
+          .map((p) => ({ ...p, almacen_nombre: almName }));
+      }
+
+      return prods.map((p) => ({ ...p, almacen_nombre: '' }));
+    },
+    enabled: filterMode === 'inventory' && !!(fechaDesde || fechaHasta),
+  });
 
   function toggleProduct(p: PosProduct | { id: string; name: string; sku: string }) {
     setSelected((prev) => {
@@ -100,7 +136,7 @@ export function EtiquetasPage() {
           id: p.id,
           name: p.name,
           sku: p.sku,
-          price: 0,
+          price: p.base_price ?? 0,
           quantity: 1,
         });
       }
@@ -278,7 +314,7 @@ export function EtiquetasPage() {
                 </div>
                 <ScrollArea className="h-[400px]">
                   <div className="space-y-1">
-                    {displayProducts.map((p) => {
+                    {products.map((p) => {
                       const isSelected = selected.some((s) => s.id === p.id);
                       return (
                         <button
@@ -302,13 +338,13 @@ export function EtiquetasPage() {
                 </ScrollArea>
               </>
             ) : (
-              /* Filtro por movimientos de inventario */
+              /* Filtro por fecha de alta + almacén */
               <>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">Desde</Label>
                     <Input
-                      type="date"
+                      type="datetime-local"
                       value={fechaDesde}
                       onChange={(e) => setFechaDesde(e.target.value)}
                     />
@@ -316,7 +352,7 @@ export function EtiquetasPage() {
                   <div>
                     <Label className="text-xs">Hasta</Label>
                     <Input
-                      type="date"
+                      type="datetime-local"
                       value={fechaHasta}
                       onChange={(e) => setFechaHasta(e.target.value)}
                     />
@@ -324,15 +360,15 @@ export function EtiquetasPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-muted-foreground" />
-                  <Select value={movementType} onValueChange={setMovementType}>
+                  <Select value={almacenFilter} onValueChange={setAlmacenFilter}>
                     <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Tipo de movimiento" />
+                      <SelectValue placeholder="Punto de Venta" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={ALL_VALUE}>Todos los tipos</SelectItem>
-                      <SelectItem value="entrada">Entradas</SelectItem>
-                      <SelectItem value="salida">Salidas</SelectItem>
-                      <SelectItem value="ajuste">Ajustes</SelectItem>
+                      <SelectItem value={ALL_VALUE}>Todos los puntos de venta</SelectItem>
+                      {almacenes.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -367,7 +403,7 @@ export function EtiquetasPage() {
                         return (
                           <button
                             key={p.id}
-                            onClick={() => toggleProduct(p)}
+                            onClick={() => toggleProduct({ ...p, base_price: p.base_price ?? 0 } as PosProduct)}
                             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                               isSelected ? 'bg-teal-50 text-teal-700' : 'hover:bg-muted/50'
                             }`}
@@ -375,7 +411,10 @@ export function EtiquetasPage() {
                             {isSelected && <Check className="h-4 w-4 shrink-0 text-teal-600" />}
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-medium">{p.name}</p>
-                              <p className="text-xs text-muted-foreground">{p.sku}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {p.sku} — {formatPrice(p.base_price)}
+                                {p.almacen_nombre ? ` · ${p.almacen_nombre}` : ''}
+                              </p>
                             </div>
                           </button>
                         );

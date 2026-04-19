@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -7,58 +7,59 @@ import {
   Store,
   User,
   ShoppingCart,
-  Monitor,
   Volume2,
   VolumeX,
+  Warehouse,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { useUserRole } from '@/hooks/useUserRole';
 import { toast } from 'sonner';
 import { ProductGrid } from './ProductGrid';
 import { Cart } from './Cart';
 import { PaymentDialog } from './PaymentDialog';
+import { PriceSelectDialog } from './PriceSelectDialog';
 import { useCart } from '../hooks/useCart';
-import { CajaSelectionModal } from '@/features/cajas/components/CajaSelectionModal';
-import { ForceCorteDialog } from '@/components/ForceCorteDialog';
-import {
-  useMyActiveSession,
-  useActiveCajas,
-  type CajaSession,
-} from '@/features/cajas/hooks/useCajas';
+import { useAutoSession } from '@/features/cajas/hooks/useCajas';
 import type { PosProduct } from '../hooks/usePosProducts';
+import { useAlmacenPriceMap, useAlmacenStockMap, applyAlmacenPrices, findProductByBarcode } from '../hooks/usePosProducts';
 import { useSettings } from '@/features/settings/hooks/useSettings';
-import { findProductByBarcode } from '../hooks/usePosProducts';
+import { useAlmacenes } from '@/features/almacenes/hooks/useAlmacenes';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { usePosSounds } from '../hooks/usePosSounds';
 
 export function PosScreen() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { data: role } = useUserRole();
-  const { items, totals, selectedClient, setSelectedClient, globalDiscountPct, setGlobalDiscountPct, addItem, removeItem, updateQuantity, setItemDiscount, clearCart, heldCarts, holdCart, restoreCart, deleteHeldCart, appliedCoupon, setAppliedCoupon, shippingFee, setShippingFee, setItemNote } =
+  const { items, totals, selectedClient, setSelectedClient, globalDiscountPct, setGlobalDiscountPct, addItem, removeItem, updateQuantity, setItemDiscount, clearCart, heldCarts, holdCart, restoreCart, deleteHeldCart, setItemNote } =
     useCart();
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [showCorteDialog, setShowCorteDialog] = useState(false);
-  const [pricingMode, setPricingMode] = useState<'publico' | 'mayoreo'>('publico');
+  const [selectedAlmacen, setSelectedAlmacen] = useState<string>('');
 
-  const { data: activeSession, isLoading: loadingSession } = useMyActiveSession();
-  const { data: cajas = [] } = useActiveCajas();
-  const [localSession, setLocalSession] = useState<CajaSession | null>(null);
+  // Price selection dialog
+  const [priceDialogProduct, setPriceDialogProduct] = useState<PosProduct | null>(null);
+  const [priceDialogPub, setPriceDialogPub] = useState(0);
+  const [priceDialogProv, setPriceDialogProv] = useState(0);
+
+  const { data: session } = useAutoSession();
+  const { data: almacenes = [] } = useAlmacenes();
+  const { data: almacenPriceMap } = useAlmacenPriceMap(selectedAlmacen || null);
+  const { data: almacenStockMap } = useAlmacenStockMap(selectedAlmacen || null);
 
   const { data: posConfig } = useSettings();
-  const isAdmin = role === 'admin';
   const { play: playSound, toggle: toggleSound, enabled: soundEnabled } = usePosSounds();
 
-  // Use the session from the DB query, or the one just created locally
-  const session = activeSession ?? localSession;
-  const caja = cajas.find((c) => c.id === session?.caja_id);
-  const cajaName = caja?.nombre ?? '';
-  const cajaPrefix = caja?.prefijo_folio ?? '';
-  const needsSession = !loadingSession && !session;
+  // Auto-select "Página Web" almacen on load
+  useEffect(() => {
+    if (almacenes.length > 0 && !selectedAlmacen) {
+      const webAlm = almacenes.find((a) => a.nombre.toLowerCase().includes('web') || a.nombre.toLowerCase().includes('gina'));
+      if (webAlm) {
+        setSelectedAlmacen(webAlm.id);
+      }
+    }
+  }, [almacenes, selectedAlmacen]);
 
-  // Barcode scanner: auto-add scanned product to cart
+  // Barcode scanner
   useBarcodeScanner(async (barcode) => {
     const product = await findProductByBarcode(barcode);
     if (product) {
@@ -71,28 +72,43 @@ export function PosScreen() {
     }
   });
 
-  function handleSessionSelected(newSession: CajaSession) {
-    setLocalSession(newSession);
-  }
-
-  function handleProductSelect(product: PosProduct) {
-    const effectivePrice =
-      pricingMode === 'mayoreo' && product.precio_mayoreo > 0
-        ? product.precio_mayoreo
-        : product.base_price;
+  const addProductToCart = useCallback((product: PosProduct, price: number) => {
     addItem({
       id: product.id,
       name: product.name,
       sku: product.sku,
-      base_price: effectivePrice,
+      base_price: price,
       cost: null,
       tax_rate: product.tax_rate,
       image_url: product.image_url,
     });
     playSound('addItem');
+  }, [addItem, playSound]);
+
+  function handleProductSelect(product: PosProduct) {
+    const [pricedProduct] = applyAlmacenPrices([product], almacenPriceMap);
+    const hasPub = pricedProduct.base_price > 0;
+    const hasProv = pricedProduct.precio_mayoreo > 0;
+
+    if (hasPub && hasProv && pricedProduct.base_price !== pricedProduct.precio_mayoreo) {
+      // Both prices exist and are different — ask user
+      setPriceDialogProduct(pricedProduct);
+      setPriceDialogPub(pricedProduct.base_price);
+      setPriceDialogProv(pricedProduct.precio_mayoreo);
+    } else {
+      // Only one price or same price — use whichever is available
+      const price = hasPub ? pricedProduct.base_price : pricedProduct.precio_mayoreo;
+      addProductToCart(pricedProduct, price);
+    }
   }
 
-  // QR scanner dialog callback (only for camera-based scanning, not hardware barcode scanner)
+  function handlePriceSelected(price: number) {
+    if (priceDialogProduct) {
+      addProductToCart(priceDialogProduct, price);
+      setPriceDialogProduct(null);
+    }
+  }
+
   async function handleQrScan(barcode: string) {
     const product = await findProductByBarcode(barcode);
     if (product) {
@@ -113,30 +129,8 @@ export function PosScreen() {
     }
   }
 
-  function handleLogout() {
-    // Vendedores must do corte before logging out
-    if (!isAdmin && session) {
-      setShowCorteDialog(true);
-      return;
-    }
-    void signOut();
-  }
-
   return (
     <div className="flex h-screen flex-col bg-gray-100">
-      {/* Caja selection modal - blocks POS until a caja is selected */}
-      <CajaSelectionModal
-        open={needsSession}
-        onCajaSelected={handleSessionSelected}
-      />
-
-      {/* Force corte dialog */}
-      <ForceCorteDialog
-        open={showCorteDialog}
-        onOpenChange={setShowCorteDialog}
-        cajaName={cajaName}
-      />
-
       {/* Top bar */}
       <header className="flex h-14 shrink-0 items-center justify-between bg-gray-900 px-4 text-white">
         <div className="flex items-center gap-3">
@@ -156,22 +150,23 @@ export function PosScreen() {
               <Store className="h-4 w-4 text-gray-400" />
             )}
             <span className="text-sm font-medium">{posConfig?.empresa || 'POS'}</span>
-            {session && (
-              <>
-                <span className="text-sm text-gray-400">|</span>
-                <div className="flex items-center gap-1">
-                  <Monitor className="h-4 w-4 text-teal-400" />
-                  <span className="text-sm font-medium text-teal-400">
-                    {cajaName}
-                    {cajaPrefix ? ` (${cajaPrefix})` : ''}
-                  </span>
-                </div>
-              </>
-            )}
+            <span className="text-sm text-gray-400">|</span>
+            <div className="flex items-center gap-1">
+              <Warehouse className="h-4 w-4 text-amber-400" />
+              <select
+                value={selectedAlmacen}
+                onChange={(e) => setSelectedAlmacen(e.target.value)}
+                className="h-7 rounded border-0 bg-gray-800 px-2 text-sm font-medium text-amber-400 outline-none focus:ring-1 focus:ring-amber-400"
+              >
+                <option value="">Punto de Venta...</option>
+                {almacenes.map((a) => (
+                  <option key={a.id} value={a.id}>{a.nombre}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Mobile cart toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -185,21 +180,10 @@ export function PosScreen() {
               </span>
             )}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden text-white hover:bg-gray-800 hover:text-white sm:flex"
-            onClick={toggleSound}
-            title={soundEnabled ? 'Sonidos ON' : 'Sonidos OFF'}
-          >
+          <Button variant="ghost" size="icon" className="hidden text-white hover:bg-gray-800 hover:text-white sm:flex" onClick={toggleSound} title={soundEnabled ? 'Sonidos ON' : 'Sonidos OFF'}>
             {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-gray-500" />}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden text-white hover:bg-gray-800 hover:text-white sm:flex"
-            onClick={handleFullscreen}
-          >
+          <Button variant="ghost" size="icon" className="hidden text-white hover:bg-gray-800 hover:text-white sm:flex" onClick={handleFullscreen}>
             <Maximize className="h-4 w-4" />
           </Button>
           <div className="hidden items-center gap-2 md:flex">
@@ -208,12 +192,7 @@ export function PosScreen() {
             </div>
             <span className="text-sm">{user?.email?.split('@')[0] ?? 'Usuario'}</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-gray-800 hover:text-white"
-            onClick={handleLogout}
-          >
+          <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800 hover:text-white" onClick={() => void signOut()}>
             <LogOut className="mr-1 h-4 w-4" />
             <span className="hidden sm:inline">Cerrar Sesion</span>
           </Button>
@@ -222,42 +201,29 @@ export function PosScreen() {
 
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left side: product grid */}
-        <div
-          className={`flex-1 overflow-hidden ${showMobileCart ? 'hidden sm:flex' : 'flex'}`}
-        >
+        <div className={`flex-1 overflow-hidden ${showMobileCart ? 'hidden sm:flex' : 'flex'}`}>
           <div className="flex-1 overflow-hidden p-3">
             <ProductGrid
               onProductSelect={handleProductSelect}
               onBarcodeScan={handleQrScan}
-              pricingMode={pricingMode}
-              onPricingModeChange={setPricingMode}
+              almacenPriceMap={almacenPriceMap}
+              almacenStockMap={almacenStockMap}
             />
           </div>
         </div>
-
-        {/* Right side: cart */}
-        <div
-          className={`w-full sm:w-[380px] lg:w-[420px] xl:w-[440px] shrink-0 ${
-            showMobileCart ? 'flex' : 'hidden sm:flex'
-          }`}
-        >
+        <div className={`w-full sm:w-[380px] lg:w-[420px] xl:w-[440px] shrink-0 ${showMobileCart ? 'flex' : 'hidden sm:flex'}`}>
           <Cart
             items={items}
             totals={totals}
             selectedClient={selectedClient}
             globalDiscountPct={globalDiscountPct}
             heldCarts={heldCarts}
-            appliedCoupon={appliedCoupon}
             onSelectClient={setSelectedClient}
             onUpdateQuantity={updateQuantity}
             onRemoveItem={removeItem}
             onSetItemDiscount={setItemDiscount}
             onSetGlobalDiscount={setGlobalDiscountPct}
-            onApplyCoupon={setAppliedCoupon}
             onSetItemNote={setItemNote}
-            shippingFee={shippingFee}
-            onSetShippingFee={setShippingFee}
             onClear={clearCart}
             onHoldCart={holdCart}
             onRestoreCart={restoreCart}
@@ -275,7 +241,7 @@ export function PosScreen() {
         items={items}
         totals={totals}
         globalDiscountPct={globalDiscountPct}
-        couponId={appliedCoupon?.id ?? null}
+        couponId={null}
         clienteName={selectedClient?.nombre ?? 'Mostrador'}
         clienteId={selectedClient?.id ?? null}
         cajaId={session?.caja_id ?? null}
@@ -285,6 +251,16 @@ export function PosScreen() {
           playSound('payment');
           toast.success('Venta registrada exitosamente');
         }}
+      />
+
+      {/* Price selection dialog */}
+      <PriceSelectDialog
+        open={!!priceDialogProduct}
+        onOpenChange={(open) => { if (!open) setPriceDialogProduct(null); }}
+        productName={priceDialogProduct?.name ?? ''}
+        precioPublico={priceDialogPub}
+        precioProveedores={priceDialogProv}
+        onSelect={handlePriceSelected}
       />
     </div>
   );
