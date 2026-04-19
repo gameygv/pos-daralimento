@@ -220,9 +220,9 @@ export function EtiquetasPage() {
 
     printWindow.document.write(`<html><head><title>Etiquetas QR - ${labels.length} unidades</title>
       <style>
-        @page { size: A4; margin: 10mm; }
+        @page { size: A4; margin: 0; }
         * { box-sizing: border-box; }
-        body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; color: #000; }
+        body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 10mm; color: #000; }
         .grid {
           display: flex; flex-wrap: wrap;
           gap: ${cfg.gap}mm;
