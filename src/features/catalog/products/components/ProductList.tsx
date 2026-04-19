@@ -110,8 +110,7 @@ export function ProductList() {
     },
   });
 
-  // Build lookup maps
-  const linkedProducts = new Set(paginaWebPrecios.map((p) => p.product_id));
+  // Build lookup map for WC mappings
   const wcMapByProduct = new Map(wcMappings.map((m) => [m.product_id, m]));
 
   async function handleSyncWC(productId: string) {
