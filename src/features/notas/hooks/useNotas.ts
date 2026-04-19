@@ -226,6 +226,56 @@ export function useCancelNota() {
   });
 }
 
+/** Delete a nota completely — reverses stock and removes all records */
+export function useDeleteNota() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (notaId: string) => {
+      const { data: nota } = (await supabase
+        .from('notas' as never)
+        .select('folio')
+        .eq('id' as never, notaId as never)
+        .maybeSingle()) as unknown as { data: { folio: number } | null };
+      if (!nota) throw new Error('Nota no encontrada');
+
+      // Get items to reverse stock
+      const { data: items } = (await supabase
+        .from('vtatkt' as never)
+        .select('product_id, can')
+        .eq('folio' as never, nota.folio as never)
+        .neq('status' as never, 'CANCELADO' as never)) as unknown as {
+        data: Array<{ product_id: string | null; can: number }> | null;
+      };
+
+      // Reverse stock for each item
+      for (const item of items ?? []) {
+        if (!item.product_id) continue;
+        const { data: variant } = (await supabase
+          .from('product_variants' as never)
+          .select('id, stock')
+          .eq('product_id' as never, item.product_id as never)
+          .maybeSingle()) as unknown as { data: { id: string; stock: number } | null };
+        if (variant) {
+          await supabase
+            .from('product_variants' as never)
+            .update({ stock: variant.stock + item.can } as never)
+            .eq('id' as never, variant.id as never);
+        }
+      }
+
+      // Delete vtatkt items
+      await supabase.from('vtatkt' as never).delete().eq('folio' as never, nota.folio as never);
+      // Delete nota_pagos
+      await supabase.from('nota_pagos' as never).delete().eq('nota_id' as never, notaId as never);
+      // Delete nota
+      await supabase.from('notas' as never).delete().eq('id' as never, notaId as never);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: NOTAS_KEY });
+    },
+  });
+}
+
 export function useToggleEntregaStatus() {
   const queryClient = useQueryClient();
   return useMutation({

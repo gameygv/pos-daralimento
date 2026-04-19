@@ -3,7 +3,7 @@ import {
   CheckCircle, Clock, Truck, Package, FileText,
   DollarSign, Plus, ChevronDown, ChevronRight, Loader2,
   Banknote, CreditCard, ArrowRightLeft, Repeat, Gift,
-  Printer, XCircle, MoreHorizontal,
+  Printer, XCircle, Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,7 @@ import {
   useRegistrarPago,
   useToggleEntregaStatus,
   useCancelNota,
+  useDeleteNota,
   type NotaRow,
 } from '../hooks/useNotas';
 import { toast } from 'sonner';
@@ -86,6 +87,7 @@ export function NotasList() {
   const toggleEntrega = useToggleEntregaStatus();
   const registrarPago = useRegistrarPago();
   const cancelNota = useCancelNota();
+  const deleteNota = useDeleteNota();
 
   const totalPendientes = notas.filter((n) => n.pago_status === 'pendiente').length;
   const totalSinEntregar = notas.filter((n) => n.entrega_status === 'sin_entregar').length;
@@ -98,6 +100,15 @@ export function NotasList() {
     try {
       await toggleEntrega.mutateAsync({ id, currentStatus: current });
       toast.success(current === 'entregado' ? 'Marcado como sin entregar' : 'Marcado como entregado');
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
+  async function handleDeleteNota(notaId: string, folio: string) {
+    try {
+      await deleteNota.mutateAsync(notaId);
+      toast.success(`Nota #${folio} eliminada y stock revertido`);
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -308,8 +319,7 @@ export function NotasList() {
                             onClick={() => {
                               // Open a print-friendly view of the nota
                               const url = `${window.location.origin}/entrega/${nota.entrega_token}`;
-                              const w = window.open(url, '_blank');
-                              if (w) setTimeout(() => w.print(), 1500);
+                              window.open(url, '_blank');
                             }}
                           >
                             <Printer className="h-3.5 w-3.5" />
@@ -317,15 +327,28 @@ export function NotasList() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-red-500 hover:text-red-700"
+                            className="h-7 w-7 text-amber-500 hover:text-amber-700"
                             title="Cancelar nota"
                             onClick={() => {
-                              if (confirm(`¿Cancelar nota #${nota.folio_display || nota.folio}? Esta accion no se puede deshacer.`)) {
+                              if (confirm(`¿Cancelar nota #${nota.folio_display || nota.folio}?`)) {
                                 void handleCancelNota(nota.id);
                               }
                             }}
                           >
                             <XCircle className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-red-500 hover:text-red-700"
+                            title="Eliminar nota (revierte inventario)"
+                            onClick={() => {
+                              if (confirm(`¿ELIMINAR nota #${nota.folio_display || nota.folio}? Se revertira el inventario y se borrara permanentemente.`)) {
+                                void handleDeleteNota(nota.id, nota.folio_display || String(nota.folio));
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </TableCell>

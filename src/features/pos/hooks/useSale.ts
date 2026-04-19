@@ -77,6 +77,36 @@ export function useCreateSale() {
         ? splitPayments.map((sp) => `${sp.method}|${sp.amount.toFixed(2)}`).join(',')
         : metodoPago;
 
+      // Check stock for products that track inventory
+      for (const item of items) {
+        if (!item.id) continue;
+        const { data: prod } = (await supabase
+          .from('products' as never)
+          .select('track_stock, name')
+          .eq('id' as never, item.id as never)
+          .maybeSingle()) as unknown as { data: { track_stock: boolean; name: string } | null };
+        if (prod && prod.track_stock) {
+          const { data: variant } = (await supabase
+            .from('product_variants' as never)
+            .select('stock')
+            .eq('product_id' as never, item.id as never)
+            .maybeSingle()) as unknown as { data: { stock: number } | null };
+          if (variant && variant.stock < item.quantity) {
+            throw new Error(`Sin existencia de "${prod.name}". Stock: ${variant.stock}, solicitado: ${item.quantity}`);
+          }
+        }
+      }
+
+      // Validate product IDs exist before inserting
+      const productIds = items.map((i) => i.id).filter(Boolean);
+      const { data: validProducts } = productIds.length > 0
+        ? (await supabase
+            .from('products' as never)
+            .select('id')
+            .in('id' as never, productIds as never)) as unknown as { data: Array<{ id: string }> | null }
+        : { data: [] as Array<{ id: string }> };
+      const validProductIds = new Set((validProducts ?? []).map((p) => p.id));
+
       // Insert all cart items into vtatkt
       const rows = items.map((item) => {
         const lineGross = item.price * item.quantity;
@@ -103,7 +133,7 @@ export function useCreateSale() {
         cliente,
         status: 'VENDIDO',
         metodo_pago: metodoPagoStr,
-        product_id: item.id || null,
+        product_id: (item.id && validProductIds.has(item.id)) ? item.id : null,
         ...(cajaId ? { caja_id: cajaId } : {}),
         ...(cajaSessionId ? { caja_session_id: cajaSessionId } : {}),
       };
