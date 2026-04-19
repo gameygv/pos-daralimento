@@ -43,15 +43,17 @@ export function EtiquetasPage() {
 
   // Filtro por rango de fechas y almacén
   const [filterMode, setFilterMode] = useState<'search' | 'inventory'>('search');
-  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date(); todayEnd.setHours(23, 59, 0, 0);
-  const toLocalISO = (d: Date) => {
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
-  const [fechaDesde, setFechaDesde] = useState(toLocalISO(todayStart));
-  const [fechaHasta, setFechaHasta] = useState(toLocalISO(todayEnd));
   const [almacenFilter, setAlmacenFilter] = useState<string>(ALL_VALUE);
+
+  // Default dates: today 00:00 to 23:59 in local time
+  function getTodayRange() {
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    return { desde: `${dateStr}T00:00`, hasta: `${dateStr}T23:59` };
+  }
+  const [fechaDesde, setFechaDesde] = useState(() => getTodayRange().desde);
+  const [fechaHasta, setFechaHasta] = useState(() => getTodayRange().hasta);
 
   const { data: products = [] } = usePosProducts({ query: search || null });
   const { data: almacenes = [] } = useAlmacenes();
@@ -69,8 +71,9 @@ export function EtiquetasPage() {
         .in('tipo' as never, ['entrada', 'ajuste'] as never)
         .order('created_at' as never, { ascending: false });
 
-      if (fechaDesde) query = query.gte('created_at' as never, fechaDesde as never);
-      if (fechaHasta) query = query.lte('created_at' as never, fechaHasta as never);
+      // Convert local datetime to ISO for UTC comparison
+      if (fechaDesde) query = query.gte('created_at' as never, new Date(fechaDesde).toISOString() as never);
+      if (fechaHasta) query = query.lte('created_at' as never, new Date(fechaHasta).toISOString() as never);
       if (almacenFilter !== ALL_VALUE) query = query.eq('almacen_id' as never, almacenFilter as never);
 
       const { data: kardexRows, error } = (await query) as unknown as {

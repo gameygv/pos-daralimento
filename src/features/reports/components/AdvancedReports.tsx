@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -37,6 +37,8 @@ import {
 } from 'recharts';
 import { useAdvancedReport } from '../hooks/useAdvancedReport';
 import { useAlmacenes } from '@/features/almacenes/hooks/useAlmacenes';
+import { useNotaItems } from '@/features/notas/hooks/useNotas';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -81,6 +83,8 @@ export function AdvancedReports() {
 
   const { data: rows = [], isLoading } = useAdvancedReport(fechaDesde, fechaHasta);
   const { data: almacenes = [] } = useAlmacenes();
+  const [expandedNotaFolio, setExpandedNotaFolio] = useState<number | null>(null);
+  const { data: expandedItems = [] } = useNotaItems(expandedNotaFolio);
 
   // Extract unique clients for filters
   const uniqueClientes = useMemo(() => {
@@ -104,7 +108,7 @@ export function AdvancedReports() {
       }
       return true;
     });
-  }, [rows, clienteFilter, metodoPagoFilter, entregaFilter]);
+  }, [rows, clienteFilter, almacenFilter, metodoPagoFilter, entregaFilter]);
 
   // --- KPIs ---
   const kpis = useMemo(() => {
@@ -552,27 +556,70 @@ export function AdvancedReports() {
                   {[...new Map(active.map((r) => [r.folio, r])).values()]
                     .sort((a, b) => b.fecha.localeCompare(a.fecha))
                     .slice(0, 50)
-                    .map((r) => (
-                    <TableRow key={r.folio}>
-                      <TableCell className="font-mono text-sm">#{r.art.startsWith('IMP-') || r.art.startsWith('Nota') ? r.art : r.folio}</TableCell>
-                      <TableCell className="text-sm">{r.fecha}</TableCell>
-                      <TableCell className="text-sm">{r.cliente}</TableCell>
-                      <TableCell className="text-right text-sm">{formatPrice(r.total)}</TableCell>
-                      <TableCell className="text-right text-sm text-green-700">{formatPrice(r.pagado)}</TableCell>
-                      <TableCell className={`text-right text-sm font-semibold ${r.saldo > 0.01 ? 'text-amber-700' : 'text-green-700'}`}>
-                        {formatPrice(r.saldo)}
-                      </TableCell>
-                      <TableCell>
-                        {r.entrega_status === 'entregado' ? (
-                          <span className="text-xs text-blue-700">Entregado</span>
-                        ) : r.entrega_status === 'sin_entregar' ? (
-                          <span className="text-xs text-red-600">Sin entregar</span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                    .map((r) => {
+                      const isExp = expandedNotaFolio === r.folio;
+                      return (
+                      <React.Fragment key={r.folio}>
+                      <TableRow
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setExpandedNotaFolio(isExp ? null : r.folio)}
+                      >
+                        <TableCell className="font-mono text-sm">
+                          <span className="inline-flex items-center gap-1">
+                            {isExp ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                            #{r.source === 'nota' ? r.art : r.folio}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm">{r.fecha}</TableCell>
+                        <TableCell className="text-sm">{r.cliente}</TableCell>
+                        <TableCell className="text-right text-sm">{formatPrice(r.total)}</TableCell>
+                        <TableCell className="text-right text-sm text-green-700">{formatPrice(r.pagado)}</TableCell>
+                        <TableCell className={`text-right text-sm font-semibold ${r.saldo > 0.01 ? 'text-amber-700' : 'text-green-700'}`}>
+                          {formatPrice(r.saldo)}
+                        </TableCell>
+                        <TableCell>
+                          {r.entrega_status === 'entregado' ? (
+                            <span className="text-xs text-blue-700">Entregado</span>
+                          ) : r.entrega_status === 'sin_entregar' ? (
+                            <span className="text-xs text-red-600">Sin entregar</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      {isExp && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="bg-muted/30 p-0">
+                            <div className="px-6 py-2">
+                              {expandedItems.length > 0 ? (
+                                <table className="w-full text-xs">
+                                  <thead><tr>
+                                    <th className="px-2 py-1 text-left font-medium">Producto</th>
+                                    <th className="px-2 py-1 text-right font-medium">Cant</th>
+                                    <th className="px-2 py-1 text-right font-medium">Precio</th>
+                                    <th className="px-2 py-1 text-right font-medium">Total</th>
+                                  </tr></thead>
+                                  <tbody>
+                                    {expandedItems.map((item, i) => (
+                                      <tr key={i}>
+                                        <td className="px-2 py-0.5">{item.art}</td>
+                                        <td className="px-2 py-0.5 text-right">{item.can}</td>
+                                        <td className="px-2 py-0.5 text-right">{formatPrice(item.prec)}</td>
+                                        <td className="px-2 py-0.5 text-right font-semibold">{formatPrice((item.prec - item.descue) * item.can)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              ) : (
+                                <p className="text-xs text-muted-foreground">Nota importada — Total: {formatPrice(r.total)}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      </React.Fragment>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </div>
