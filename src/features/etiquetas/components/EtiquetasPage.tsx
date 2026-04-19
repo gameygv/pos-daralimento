@@ -55,24 +55,30 @@ function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function escapeSvgText(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-/** Truncate string to maxLen chars with ellipsis */
-function truncate(str: string, maxLen: number): string {
-  return str.length > maxLen ? str.slice(0, maxLen - 1) + '…' : str;
-}
-
-/** Split name into max 2 lines */
-function splitName(name: string, maxChars: number): string[] {
-  if (name.length <= maxChars) return [name];
-  // Try to break at last space within limit
-  const breakIdx = name.lastIndexOf(' ', maxChars);
-  if (breakIdx > 0) {
-    return [name.slice(0, breakIdx), truncate(name.slice(breakIdx + 1), maxChars)];
+/** Wrap text for canvas, returns array of lines that fit within maxWidth */
+function wrapCanvasText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = test;
+    }
   }
-  return [truncate(name, maxChars), ''];
+  if (current) lines.push(current);
+  // Truncate to max 2 lines
+  if (lines.length > 2) {
+    let secondLine = lines.slice(1).join(' ');
+    while (ctx.measureText(secondLine + '…').width > maxWidth && secondLine.length > 1) {
+      secondLine = secondLine.slice(0, -1);
+    }
+    return [lines[0], secondLine + '…'];
+  }
+  return lines;
 }
 
 function formatWeight(grams: number | null): string {
@@ -252,12 +258,11 @@ export function EtiquetasPage() {
     printWindow.document.close();
   }
 
-  // ─── Download SVG for Cricut ──────────────────────────
+  // ─── Download PNG for Cricut (Canvas API, 300 DPI) ─────
 
-  async function handleDownloadSVG() {
+  async function handleDownloadPNG() {
     const cfg = LABEL_CONFIGS[labelSize];
     const grid = calcGrid(labelSize);
-    const maxChars = labelSize === 'large' ? 18 : 16;
 
     const labels = selected.flatMap((s) => Array.from({ length: s.quantity }, () => s));
     if (labels.length === 0) return;
@@ -265,66 +270,99 @@ export function EtiquetasPage() {
     const weightMap = await fetchWeights([...new Set(selected.map((s) => s.id))]);
     const totalPages = Math.ceil(labels.length / grid.perPage);
 
+    // Pre-render QR codes as Image objects
+    const uniqueSkus = [...new Set(labels.map((l) => l.sku))];
+    const qrImages = new Map<string, HTMLImageElement>();
+    await Promise.all(
+      uniqueSkus.map(
+        (sku) =>
+          new Promise<void>((resolve) => {
+            const svgStr = renderToStaticMarkup(<QRCodeSVG value={sku} size={200} level="M" />);
+            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => { qrImages.set(sku, img); URL.revokeObjectURL(url); resolve(); };
+            img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+            img.src = url;
+          }),
+      ),
+    );
+
+    const DPI = 300;
+    const mmToPx = DPI / 25.4;
+
     for (let page = 0; page < totalPages; page++) {
       const pageLabels = labels.slice(page * grid.perPage, (page + 1) * grid.perPage);
-      let svgContent = '';
+      const usedCols = Math.min(pageLabels.length, grid.cols);
+      const usedRows = Math.ceil(pageLabels.length / grid.cols);
+
+      const canvasW = Math.ceil((usedCols * cfg.w + (usedCols - 1) * cfg.gap) * mmToPx);
+      const canvasH = Math.ceil((usedRows * cfg.h + (usedRows - 1) * cfg.gap) * mmToPx);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasW;
+      canvas.height = canvasH;
+      const ctx = canvas.getContext('2d')!;
+      // Background stays transparent (default for canvas)
 
       pageLabels.forEach((l, idx) => {
         const col = idx % grid.cols;
         const row = Math.floor(idx / grid.cols);
-        const x = col * (cfg.w + cfg.gap);
-        const y = row * (cfg.h + cfg.gap);
+        const x = col * (cfg.w + cfg.gap) * mmToPx;
+        const y = row * (cfg.h + cfg.gap) * mmToPx;
+        const w = cfg.w * mmToPx;
+        const h = cfg.h * mmToPx;
+        const pad = 1.5 * mmToPx;
+
+        // White label background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 0.3 * mmToPx;
+        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+
+        // QR code
+        const qrSize = cfg.qr * mmToPx;
+        const qrX = x + w - qrSize - pad;
+        const qrY = y + (h - qrSize) / 2;
+        const qrImg = qrImages.get(l.sku);
+        if (qrImg) ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+        // Text area width
+        const textMaxW = w - qrSize - pad * 3;
+        const nameFontPx = cfg.fontSize * mmToPx;
+        const smallFontPx = cfg.fontSize * 0.75 * mmToPx;
+
+        // Product name (max 2 lines)
+        ctx.fillStyle = '#000';
+        ctx.font = `bold ${nameFontPx}px Arial, sans-serif`;
+        const nameLines = wrapCanvasText(ctx, l.name, textMaxW);
+        nameLines.slice(0, 2).forEach((line, i) => {
+          ctx.fillText(line, x + pad, y + pad + nameFontPx * 0.85 + nameFontPx * 1.2 * i, textMaxW);
+        });
+
+        // SKU
+        ctx.fillStyle = '#333';
+        ctx.font = `600 ${smallFontPx}px monospace`;
+        ctx.fillText(l.sku, x + pad, y + h - pad - smallFontPx * 1.1, textMaxW);
+
+        // Weight
         const weight = formatWeight(weightMap.get(l.id) ?? null);
-        const lines = splitName(l.name, maxChars);
-
-        // QR code as embedded SVG
-        const qrSvgFull = renderToStaticMarkup(<QRCodeSVG value={l.sku} size={100} level="M" />);
-        // Extract inner content (remove outer <svg> tag)
-        const qrInner = qrSvgFull.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
-
-        const qrX = x + cfg.w - cfg.qr - 1.5;
-        const qrY = y + (cfg.h - cfg.qr) / 2;
-        const textX = x + 1.5;
-
-        svgContent += `
-  <g>
-    <rect x="${x}" y="${y}" width="${cfg.w}" height="${cfg.h}" fill="white" stroke="#000" stroke-width="0.25"/>
-    <text x="${textX}" y="${y + cfg.fontSize + 1.5}" font-family="Arial, sans-serif" font-size="${cfg.fontSize}" font-weight="bold" fill="#000">
-      ${escapeSvgText(lines[0])}
-    </text>
-    ${lines[1] ? `<text x="${textX}" y="${y + cfg.fontSize * 2 + 2.5}" font-family="Arial, sans-serif" font-size="${cfg.fontSize}" font-weight="bold" fill="#000">${escapeSvgText(lines[1])}</text>` : ''}
-    <text x="${textX}" y="${y + cfg.h - cfg.fontSize * 1.5 - 1}" font-family="monospace" font-size="${cfg.fontSize * 0.75}" fill="#333" font-weight="600">
-      ${escapeSvgText(l.sku)}
-    </text>
-    <text x="${textX}" y="${y + cfg.h - 1.5}" font-family="Arial, sans-serif" font-size="${cfg.fontSize * 0.75}" fill="#333" font-weight="600">
-      ${escapeSvgText(weight)}
-    </text>
-    <g transform="translate(${qrX}, ${qrY}) scale(${cfg.qr / 100})">
-      ${qrInner}
-    </g>
-  </g>`;
+        ctx.font = `600 ${smallFontPx}px Arial, sans-serif`;
+        ctx.fillText(weight, x + pad, y + h - pad + smallFontPx * 0.15, textMaxW);
       });
 
-      const usedW = grid.cols * cfg.w + (grid.cols - 1) * cfg.gap;
-      const usedH = Math.ceil(pageLabels.length / grid.cols) * cfg.h + (Math.ceil(pageLabels.length / grid.cols) - 1) * cfg.gap;
-
-      const svgDoc = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${usedW} ${usedH}" width="${usedW}mm" height="${usedH}mm">
-${svgContent}
-</svg>`;
-
-      const blob = new Blob([svgDoc], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
+      // Download as PNG
+      const dataUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
-      a.href = url;
-      a.download = totalPages > 1 ? `etiquetas-pagina-${page + 1}.svg` : 'etiquetas.svg';
+      a.href = dataUrl;
+      a.download = totalPages > 1 ? `etiquetas-pagina-${page + 1}.png` : 'etiquetas.png';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     }
 
-    toast.success(`SVG descargado (${labels.length} etiquetas en ${totalPages} archivo${totalPages > 1 ? 's' : ''})`);
+    toast.success(`PNG descargado (${labels.length} etiquetas, ${totalPages} pagina${totalPages > 1 ? 's' : ''})`);
   }
 
   // ─── Computed values ──────────────────────────────────
@@ -349,9 +387,9 @@ ${svgContent}
             <Printer className="mr-2 h-4 w-4" />
             Imprimir
           </Button>
-          <Button onClick={handleDownloadSVG} disabled={selected.length === 0}>
+          <Button onClick={handleDownloadPNG} disabled={selected.length === 0}>
             <Download className="mr-2 h-4 w-4" />
-            Descargar SVG para Cricut
+            Descargar PNG para Cricut
           </Button>
         </div>
       </div>
@@ -577,11 +615,12 @@ ${svgContent}
                 <p className="font-semibold text-foreground">Opcion A: Imprimir y cortar con Cricut</p>
                 <ol className="mt-1 ml-4 list-decimal space-y-1">
                   <li>Selecciona productos y cantidades</li>
-                  <li>Click <strong>"Descargar SVG para Cricut"</strong></li>
+                  <li>Click <strong>"Descargar PNG para Cricut"</strong></li>
                   <li>Abre <strong>Cricut Design Space</strong> → <em>Nuevo proyecto</em></li>
-                  <li><strong>Subir</strong> → <em>Cargar imagen</em> → selecciona el SVG descargado</li>
+                  <li><strong>Cargar</strong> → <em>Cargar imagen</em> → selecciona el PNG descargado</li>
+                  <li>En tipo de carga selecciona <strong>"Compleja"</strong> → Continuar</li>
                   <li>Selecciona <strong>"Imprimir luego cortar"</strong> como tipo de imagen</li>
-                  <li>Inserta en el lienzo y ajusta el tamano si es necesario</li>
+                  <li>Inserta en el lienzo, verifica que el tamano sea correcto</li>
                   <li>Click <strong>"Crear"</strong> → Cricut enviara a imprimir en la EPSON con marcas de registro</li>
                   <li>Coloca la hoja impresa en el tapete del Cricut</li>
                   <li>El Cricut leera las marcas y cortara cada etiqueta</li>
