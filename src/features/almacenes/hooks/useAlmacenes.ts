@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logAction } from '@/features/logs/hooks/useLogs';
+import { maybeSyncStockToWC } from '@/features/almacenes/utils/syncStockToWC';
 
 export interface AlmacenRow {
   id: string;
@@ -282,6 +284,13 @@ export function useUpsertAlmacenPrecio() {
         error: { message: string } | null;
       };
       if (error) throw new Error(error.message);
+
+      logAction('almacen_precio_actualizado', {
+        almacen_id: params.almacenId,
+        product_id: params.productId,
+        precio_publico: params.precioPublico,
+        precio_proveedores: params.precioProveedores,
+      });
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ALMACEN_PRECIOS_KEY });
@@ -440,6 +449,18 @@ export function useAdjustAlmacenStock() {
         .from('product_variants' as never)
         .update({ stock: totalStock })
         .eq('id' as never, params.variantId as never);
+
+      // Log and sync to WC
+      logAction('stock_ajustado', {
+        almacen_id: params.almacenId,
+        product_id: params.productId,
+        tipo: params.tipo,
+        cantidad: params.cantidad,
+        stock_anterior: prevStock,
+        stock_nuevo: newStock,
+        usuario: params.userName ?? null,
+      });
+      maybeSyncStockToWC(params.almacenId, params.productId, newStock);
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ALMACEN_STOCK_KEY });
@@ -574,7 +595,19 @@ export function useCreateTransferencia() {
           created_by: params.userId ?? null,
           created_by_name: params.userName ?? null,
         });
+
+        // Sync to WC if origin or destination is "Página Web"
+        maybeSyncStockToWC(params.almacenOrigenId, item.productId, newOrigen);
+        maybeSyncStockToWC(params.almacenDestinoId, item.productId, newDest);
       }
+
+      logAction('transferencia_creada', {
+        transferencia_id: transfer.id,
+        origen: params.almacenOrigenId,
+        destino: params.almacenDestinoId,
+        items: params.items.length,
+        usuario: params.userName ?? null,
+      });
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: TRANSFERENCIAS_KEY });

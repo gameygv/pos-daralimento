@@ -24,6 +24,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { toast } from 'sonner';
+import { logAction } from '@/features/logs/hooks/useLogs';
+import { syncStockToWC } from '@/features/almacenes/utils/syncStockToWC';
 
 function useProductAlmacenStock(productId: string | null) {
   return useQuery<Array<{ almacen_id: string; stock: number }>>({
@@ -209,37 +211,58 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
       : null;
 
   async function onSubmit(values: ProductFormValues) {
-    // Set primary category_id to first selected category (for backwards compat)
-    const catArray = [...selectedCatIds];
-    values.category_id = catArray[0] ?? null;
+    try {
+      // Set primary category_id to first selected category (for backwards compat)
+      const catArray = [...selectedCatIds];
+      values.category_id = catArray[0] ?? null;
 
-    let savedProductId = productId;
-    if (isEditing && productId) {
-      await updateMutation.mutateAsync({ id: productId, ...values } as { id: string } & Partial<ProductInsert>);
-    } else {
-      const result = await createMutation.mutateAsync(values as ProductInsert);
-      savedProductId = (result as { id: string } | null)?.id ?? null;
-    }
-
-    // Save multi-categories
-    if (savedProductId) {
-      // Delete existing and re-insert
-      await supabase.from('product_categories' as never).delete().eq('product_id' as never, savedProductId as never);
-      if (catArray.length > 0) {
-        await supabase.from('product_categories' as never).insert(
-          catArray.map((cid) => ({ product_id: savedProductId, category_id: cid }))
-        );
+      let savedProductId = productId;
+      if (isEditing && productId) {
+        await updateMutation.mutateAsync({ id: productId, ...values } as { id: string } & Partial<ProductInsert>);
+        logAction('producto_actualizado', {
+          product_id: productId,
+          nombre: values.name,
+          base_price: values.base_price,
+          precio_mayoreo: values.precio_mayoreo,
+          cost: values.cost,
+        });
+      } else {
+        const result = await createMutation.mutateAsync(values as ProductInsert);
+        savedProductId = (result as { id: string } | null)?.id ?? null;
+        logAction('producto_creado', {
+          product_id: savedProductId,
+          nombre: values.name,
+          base_price: values.base_price,
+        });
       }
-    }
 
-    onOpenChange(false);
+      // Save multi-categories
+      if (savedProductId) {
+        // Delete existing and re-insert
+        await supabase.from('product_categories' as never).delete().eq('product_id' as never, savedProductId as never);
+        if (catArray.length > 0) {
+          await supabase.from('product_categories' as never).insert(
+            catArray.map((cid) => ({ product_id: savedProductId, category_id: cid }))
+          );
+        }
+      }
+
+      toast.success(isEditing ? 'Producto actualizado' : 'Producto creado');
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(`Error al guardar: ${(err as Error).message}`);
+    }
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
         </DialogHeader>
@@ -486,6 +509,17 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                                     }
                                     void queryClient.invalidateQueries({ queryKey: ['product-almacen-stock'] });
                                     void queryClient.invalidateQueries({ queryKey: ['product-stock'] });
+                                    logAction('almacen_precio_stock_guardado', {
+                                      almacen: alm.nombre,
+                                      product_id: productId,
+                                      precio_publico: parseFloat(pubEl?.value) || 0,
+                                      precio_proveedores: parseFloat(provEl?.value) || 0,
+                                      stock: newStock,
+                                    });
+                                    // Sync stock to WooCommerce if this is "Página Web"
+                                    if (alm.nombre === 'Página Web' && productId) {
+                                      syncStockToWC(productId, newStock);
+                                    }
                                     toast.success(`${alm.nombre}: stock y precios guardados`);
                                   } catch (err) {
                                     toast.error((err as Error).message);
