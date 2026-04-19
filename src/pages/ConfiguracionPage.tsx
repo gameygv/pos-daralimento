@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings, useSaveSettings, SettingsForm } from '@/features/settings';
+import { WhatsAppSettings } from '@/features/whatsapp/WhatsAppSettings';
 
 export default function ConfiguracionPage() {
   const { data, isLoading, isError } = useSettings();
@@ -28,16 +29,19 @@ export default function ConfiguracionPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <SettingsForm
-          initialData={data}
-          saving={saveSettings.isPending}
-          onSave={(config) =>
-            saveSettings.mutate(config, {
-              onSuccess: () => toast.success('Configuración guardada'),
-              onError: (err) => toast.error(err.message),
-            })
-          }
-        />
+        <>
+          <SettingsForm
+            initialData={data}
+            saving={saveSettings.isPending}
+            onSave={(config) =>
+              saveSettings.mutate(config, {
+                onSuccess: () => toast.success('Configuración guardada'),
+                onError: (err) => toast.error(err.message),
+              })
+            }
+          />
+          <WhatsAppSettings />
+        </>
       )}
     </div>
   );

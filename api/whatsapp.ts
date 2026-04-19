@@ -61,14 +61,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
         break;
 
+      case 'getChats':
+        endpoint = `${API_URL}/waInstance${INSTANCE}/getChats/${TOKEN}`;
+        body = {};
+        break;
+
       default:
         return res.status(400).json({ error: `Unknown action: ${action}` });
     }
 
+    const isGet = action === 'getChats';
     const response = await fetch(endpoint, {
-      method: 'POST',
+      method: isGet ? 'GET' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      ...(isGet ? {} : { body: JSON.stringify(body) }),
     });
 
     const data = await response.json();
