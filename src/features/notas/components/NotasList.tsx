@@ -3,7 +3,7 @@ import {
   CheckCircle, Clock, Truck, Package, FileText,
   DollarSign, Plus, ChevronDown, ChevronRight, Loader2,
   Banknote, CreditCard, ArrowRightLeft, Repeat, Gift,
-  Printer, XCircle, Trash2,
+  Printer, XCircle, Trash2, MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,8 @@ import {
   type NotaRow,
 } from '../hooks/useNotas';
 import { toast } from 'sonner';
+import { useWhatsAppConfig } from '@/features/whatsapp/WhatsAppSettings';
+import { sendWhatsAppMessage } from '@/features/whatsapp/sendWhatsApp';
 
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat('es-MX', {
@@ -88,6 +90,8 @@ export function NotasList() {
   const registrarPago = useRegistrarPago();
   const cancelNota = useCancelNota();
   const deleteNota = useDeleteNota();
+  const { data: waConfig } = useWhatsAppConfig();
+  const [sendingWA, setSendingWA] = useState<string | null>(null);
 
   const totalPendientes = notas.filter((n) => n.pago_status === 'pendiente').length;
   const totalSinEntregar = notas.filter((n) => n.entrega_status === 'sin_entregar').length;
@@ -121,6 +125,52 @@ export function NotasList() {
     } catch (err) {
       toast.error((err as Error).message);
     }
+  }
+
+  async function handleSendWhatsApp(nota: NotaRow) {
+    if (!waConfig?.chat_id) {
+      toast.error('Configura un destino en Configuracion → WhatsApp');
+      return;
+    }
+    setSendingWA(nota.id);
+    try {
+      const entregaUrl = `${window.location.origin}/entrega/${nota.entrega_token}`;
+      const folio = nota.folio_display || String(nota.folio);
+      const totalFormatted = formatPrice(nota.total);
+
+      // Fetch items for this nota
+      const items = expandedNota === nota.id ? expandedItems : [];
+      let itemLines = '';
+      if (items.length > 0) {
+        itemLines = items.map((i) => `  • ${i.can}x ${i.art} — ${formatPrice(i.prec * i.can)}`).join('\n');
+      }
+
+      const message = [
+        `🛒 *Nueva orden - Nota #${folio}*`,
+        '',
+        `👤 Cliente: ${nota.cliente}`,
+        `📅 Fecha: ${nota.fecha} ${nota.hora}`,
+        ...(nota.vendedor ? [`🧑‍💼 Vendedor: ${nota.vendedor}`] : []),
+        '',
+        ...(itemLines ? ['📦 *Productos:*', itemLines, ''] : []),
+        `💰 *Total: ${totalFormatted}*`,
+        `💳 Pago: ${nota.pago_status === 'pagado' ? '✅ Pagado' : '⏳ Pendiente'}`,
+        `📦 Entrega: ${nota.entrega_status === 'entregado' ? '✅ Entregado' : '⏳ Sin entregar'}`,
+        '',
+        `📋 *Confirmar entrega:*`,
+        entregaUrl,
+      ].join('\n');
+
+      const result = await sendWhatsAppMessage({ chatId: waConfig.chat_id, message });
+      if (result.success) {
+        toast.success('Notificacion enviada por WhatsApp');
+      } else {
+        toast.error(`Error WhatsApp: ${result.message}`);
+      }
+    } catch (err) {
+      toast.error(`Error: ${(err as Error).message}`);
+    }
+    setSendingWA(null);
   }
 
   function openPagoDialog(nota: NotaRow) {
@@ -311,13 +361,26 @@ export function NotasList() {
                               Pagar
                             </Button>
                           )}
+                          {waConfig?.chat_id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-green-600 hover:text-green-800"
+                              title="Enviar por WhatsApp"
+                              disabled={sendingWA === nota.id}
+                              onClick={() => void handleSendWhatsApp(nota)}
+                            >
+                              {sendingWA === nota.id
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                : <MessageSquare className="h-3.5 w-3.5" />}
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
                             title="Ver nota / Reimprimir"
                             onClick={() => {
-                              // Open a print-friendly view of the nota
                               const url = `${window.location.origin}/entrega/${nota.entrega_token}`;
                               window.open(url, '_blank');
                             }}
