@@ -12,6 +12,20 @@ export interface AuditLogRow {
 
 const LOGS_KEY = ['audit-logs'] as const;
 
+/** Log an action to audit_log — fire and forget */
+export function logAction(action: string, details?: Record<string, unknown>) {
+  // Get current user from supabase auth
+  supabase.auth.getUser().then(({ data }) => {
+    const user = data?.user;
+    supabase.from('audit_log' as never).insert({
+      user_id: user?.id ?? null,
+      user_email: user?.email ?? null,
+      action,
+      details: details ?? null,
+    }).then(() => {});
+  });
+}
+
 export function useLogs(actionFilter?: string | null) {
   return useQuery<AuditLogRow[]>({
     queryKey: [...LOGS_KEY, actionFilter],

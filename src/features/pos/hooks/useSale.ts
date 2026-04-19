@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getNextCajaFolio } from '@/features/cajas/hooks/useCajas';
+import { logAction } from '@/features/logs/hooks/useLogs';
 import type { CartItem } from '../types';
 
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'transferencia' | 'trueque' | 'regalo';
@@ -210,7 +211,8 @@ export function useCreateSale() {
         entregaToken: nota?.entrega_token ?? '',
       };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      logAction('venta', { folio: result.folio, folioDisplay: result.folioDisplay, total: result.total, items: result.items });
       void queryClient.invalidateQueries({ queryKey: ['settings'] });
       void queryClient.invalidateQueries({ queryKey: ['notas'] });
     },

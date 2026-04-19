@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { logAction } from '@/features/logs/hooks/useLogs';
 
 export interface NotaRow {
   id: string;
@@ -176,6 +177,7 @@ export function useRegistrarPago() {
       };
       if (updateErr) throw new Error(updateErr.message);
 
+      logAction('pago_registrado', { notaId: params.notaId, monto: params.monto, metodo: params.metodoPago });
       return { newPagado, isFullyPaid };
     },
     onSuccess: () => {
@@ -219,6 +221,8 @@ export function useCancelNota() {
         .from('vtatkt' as never)
         .update({ status: 'CANCELADO' } as never)
         .eq('folio' as never, nota.folio as never);
+
+      logAction('nota_cancelada', { notaId, folio: nota.folio });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: NOTAS_KEY });
@@ -269,6 +273,8 @@ export function useDeleteNota() {
       await supabase.from('nota_pagos' as never).delete().eq('nota_id' as never, notaId as never);
       // Delete nota
       await supabase.from('notas' as never).delete().eq('id' as never, notaId as never);
+
+      logAction('nota_eliminada', { notaId, folio: nota.folio });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: NOTAS_KEY });

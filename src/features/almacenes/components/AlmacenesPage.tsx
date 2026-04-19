@@ -19,6 +19,8 @@ import {
   type AlmacenRow, type KardexFilter,
 } from '../hooks/useAlmacenes';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 type Tab = 'stock' | 'precios' | 'kardex' | 'transferir';
 
@@ -58,6 +60,19 @@ export function AlmacenesPage() {
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newDir, setNewDir] = useState('');
+  const [newClienteId, setNewClienteId] = useState('');
+
+  // Fetch clientes for selector
+  const { data: clientes = [] } = useQuery<Array<{ id: string; nombre: string }>>({
+    queryKey: ['clientes-list'],
+    queryFn: async () => {
+      const { data } = (await supabase
+        .from('clientes' as never)
+        .select('id, nombre')
+        .order('nombre' as never)) as unknown as { data: Array<{ id: string; nombre: string }> | null };
+      return data ?? [];
+    },
+  });
 
   // Kardex filters
   const [kardexTipo, setKardexTipo] = useState('');
@@ -91,7 +106,7 @@ export function AlmacenesPage() {
 
   async function handleCreateAlmacen() {
     if (!newName.trim()) return;
-    await createAlmacen.mutateAsync({
+    const result = await createAlmacen.mutateAsync({
       nombre: newName.trim(),
       descripcion: newDesc.trim() || null,
       direccion: newDir.trim() || null,
@@ -99,10 +114,15 @@ export function AlmacenesPage() {
       is_active: true,
       is_default: false,
     });
+    // Link client if selected
+    if (newClienteId && result?.id) {
+      await supabase.from('almacenes' as never).update({ cliente_id: newClienteId } as never).eq('id' as never, result.id as never);
+    }
     toast.success('Punto de Venta creado');
     setNewName('');
     setNewDesc('');
     setNewDir('');
+    setNewClienteId('');
     setShowCreateDialog(false);
   }
 
@@ -527,6 +547,19 @@ export function AlmacenesPage() {
             <div>
               <Label>Direccion</Label>
               <Input value={newDir} onChange={(e) => setNewDir(e.target.value)} placeholder="Opcional" />
+            </div>
+            <div>
+              <Label>Cliente vinculado</Label>
+              <Select value={newClienteId} onValueChange={setNewClienteId}>
+                <SelectTrigger><SelectValue placeholder="Sin cliente vinculado" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin cliente vinculado</SelectItem>
+                  {clientes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-muted-foreground">Al seleccionar este punto de venta en el POS, se auto-selecciona este cliente</p>
             </div>
           </div>
           <DialogFooter>
