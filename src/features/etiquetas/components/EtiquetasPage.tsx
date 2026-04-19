@@ -162,12 +162,11 @@ export function EtiquetasPage() {
           id: p.id,
           name: p.name,
           sku: p.sku,
-          price: 0, // will be enriched below
-          quantity: 1,
+          price: 0,
+          quantity: p.stock, // usa las existencias como cantidad de etiquetas
         });
       }
     }
-    // Enrich prices from products list if available
     if (newSelected.length > 0) {
       supabase
         .from('products' as never)

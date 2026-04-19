@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Pencil, Plus, Package, ChevronLeft, ChevronRight, X, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -13,9 +12,8 @@ import {
 import { useProducts, useToggleProductActive } from '../hooks/useProducts';
 import type { StockFilter } from '../hooks/useProducts';
 import { useCategoryList } from '@/features/catalog/categories';
-import { PRODUCT_TYPE_CONFIG, formatPrice } from '../schemas/product.schema';
+import { formatPrice } from '../schemas/product.schema';
 import type { ProductSearchResult } from '@/integrations/supabase/catalog-types';
-import type { ProductType } from '@/integrations/supabase/catalog-types';
 import { ProductForm } from './ProductForm';
 
 const ALL_VALUE = '__all__';
@@ -30,7 +28,6 @@ const STOCK_FILTER_OPTIONS: { value: StockFilter; label: string }[] = [
 export function ProductList() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>(ALL_VALUE);
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_VALUE);
   const [stockFilter, setStockFilter] = useState<StockFilter>('all');
   const [page, setPage] = useState(0);
@@ -46,11 +43,10 @@ export function ProductList() {
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [debouncedSearch, typeFilter, categoryFilter, stockFilter]);
+  }, [debouncedSearch, categoryFilter, stockFilter]);
 
   const { data, isLoading } = useProducts({
     query: debouncedSearch || null,
-    productType: typeFilter === ALL_VALUE ? null : typeFilter,
     categoryId: categoryFilter === ALL_VALUE ? null : categoryFilter,
     stockFilter,
     page,
@@ -64,14 +60,12 @@ export function ProductList() {
 
   const hasActiveFilters =
     search !== '' ||
-    typeFilter !== ALL_VALUE ||
     categoryFilter !== ALL_VALUE ||
     stockFilter !== 'all';
 
   const clearFilters = useCallback(() => {
     setSearch('');
     setDebouncedSearch('');
-    setTypeFilter(ALL_VALUE);
     setCategoryFilter(ALL_VALUE);
     setStockFilter('all');
     setPage(0);
@@ -105,21 +99,6 @@ export function ProductList() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Tipo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todos los tipos</SelectItem>
-            {(Object.entries(PRODUCT_TYPE_CONFIG) as [ProductType, { label: string; color: string }][]).map(
-              ([type, config]) => (
-                <SelectItem key={type} value={type}>
-                  {config.label}
-                </SelectItem>
-              ),
-            )}
-          </SelectContent>
-        </Select>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Categoría" />
@@ -179,7 +158,6 @@ export function ProductList() {
                 <TableHead className="w-12" />
                 <TableHead>Nombre</TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead>Tipo</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
@@ -189,7 +167,6 @@ export function ProductList() {
             </TableHeader>
             <TableBody>
               {products.map((product: ProductSearchResult) => {
-                const typeConfig = PRODUCT_TYPE_CONFIG[product.product_type];
                 return (
                   <TableRow key={product.id}>
                     <TableCell>
@@ -208,11 +185,6 @@ export function ProductList() {
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>
                       <code className="text-xs">{product.sku}</code>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={typeConfig.color}>
-                        {typeConfig.label}
-                      </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {product.category_name ?? '—'}

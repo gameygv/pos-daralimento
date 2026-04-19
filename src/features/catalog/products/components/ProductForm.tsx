@@ -200,18 +200,6 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
     }
   }, [watchName, isEditing, form]);
 
-  // Margin calculation
-  const watchPrice = form.watch('base_price');
-  const watchMayoreo = form.watch('precio_mayoreo');
-  const watchCost = form.watch('cost');
-  const margin =
-    watchPrice > 0 && watchCost !== null && watchCost !== undefined && watchCost >= 0
-      ? (((watchPrice - watchCost) / watchPrice) * 100).toFixed(1)
-      : null;
-  const marginMayoreo =
-    watchMayoreo > 0 && watchCost !== null && watchCost !== undefined && watchCost >= 0
-      ? (((watchMayoreo - watchCost) / watchMayoreo) * 100).toFixed(1)
-      : null;
 
   async function onSubmit(values: ProductFormValues) {
     try {
@@ -369,11 +357,6 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 {form.formState.errors.base_price && (
                   <p className="text-sm text-destructive">{form.formState.errors.base_price.message}</p>
                 )}
-                {margin !== null && (
-                  <p className="text-xs text-muted-foreground">
-                    Margen: <span className="font-medium">{margin}%</span>
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="precio_mayoreo">Precio Proveedores</Label>
@@ -388,36 +371,18 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 {form.formState.errors.precio_mayoreo && (
                   <p className="text-sm text-destructive">{form.formState.errors.precio_mayoreo.message}</p>
                 )}
-                {marginMayoreo !== null && (
-                  <p className="text-xs text-muted-foreground">
-                    Margen: <span className="font-medium">{marginMayoreo}%</span>
-                  </p>
-                )}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cost">Costo</Label>
-                <Input
-                  id="cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...form.register('cost')}
-                  placeholder="Opcional"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="weight_grams">Peso (gramos)</Label>
-                <Input
-                  id="weight_grams"
-                  type="number"
-                  step="1"
-                  min="0"
-                  {...form.register('weight_grams')}
-                  placeholder="Ej: 500"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="weight_grams">Peso (gramos)</Label>
+              <Input
+                id="weight_grams"
+                type="number"
+                step="1"
+                min="0"
+                {...form.register('weight_grams')}
+                placeholder="Ej: 500"
+              />
             </div>
           </div>
 
