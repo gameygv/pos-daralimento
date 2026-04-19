@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Pencil, Plus, Package, ChevronLeft, ChevronRight, X, ImageIcon } from 'lucide-react';
+import { Pencil, Plus, Package, ChevronLeft, ChevronRight, X, ImageIcon, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -15,6 +15,7 @@ import { useCategoryList } from '@/features/catalog/categories';
 import { formatPrice } from '../schemas/product.schema';
 import type { ProductSearchResult } from '@/integrations/supabase/catalog-types';
 import { ProductForm } from './ProductForm';
+import { PriceCalculatorDialog } from './PriceCalculatorDialog';
 
 const ALL_VALUE = '__all__';
 
@@ -33,6 +34,7 @@ export function ProductList() {
   const [page, setPage] = useState(0);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [calcProduct, setCalcProduct] = useState<{ id: string; name: string; basePrice: number; precioMayoreo: number } | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -210,13 +212,29 @@ export function ProductList() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(product.id)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Calculadora de precio por peso"
+                          onClick={() => setCalcProduct({
+                            id: product.id,
+                            name: product.name,
+                            basePrice: product.base_price,
+                            precioMayoreo: product.precio_mayoreo,
+                          })}
+                        >
+                          <Calculator className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Editar producto"
+                          onClick={() => handleEdit(product.id)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -255,6 +273,15 @@ export function ProductList() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         productId={editingProductId}
+      />
+
+      <PriceCalculatorDialog
+        open={calcProduct !== null}
+        onOpenChange={(open) => { if (!open) setCalcProduct(null); }}
+        productId={calcProduct?.id ?? null}
+        productName={calcProduct?.name ?? ''}
+        basePrice={calcProduct?.basePrice ?? 0}
+        precioMayoreo={calcProduct?.precioMayoreo ?? 0}
       />
     </div>
   );
