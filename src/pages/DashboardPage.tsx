@@ -1,6 +1,7 @@
 import { Package, FolderTree, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useDashboardStats } from '@/features/dashboard/hooks/useDashboardStats';
+import { AdvancedReports } from '@/features/reports';
 
 function StatCard({
   title,
@@ -52,8 +53,7 @@ export default function DashboardPage() {
       {isError ? (
         <Card className="border-dashed">
           <CardContent className="p-6 text-center text-muted-foreground">
-            No se pudieron cargar las estadísticas. Verifica que las tablas del
-            catálogo existan en Supabase.
+            No se pudieron cargar las estadísticas.
           </CardContent>
         </Card>
       ) : (
@@ -84,6 +84,8 @@ export default function DashboardPage() {
           />
         </div>
       )}
+
+      <AdvancedReports />
     </div>
   );
 }

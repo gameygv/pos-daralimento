@@ -29,7 +29,6 @@ const menuItems: MenuItem[] = [
   { label: 'Categorias',     path: '/categorias',    icon: Tags, permission: 'categorias' },
   { label: 'Inventario',     path: '/inventario',    icon: Warehouse, permission: 'inventario' },
   { label: 'Puntos de Venta', path: '/almacenes',     icon: Package, permission: 'almacenes' },
-  { label: 'Reportes',       path: '/reportes',      icon: BarChart3, permission: 'reportes' },
   { label: 'Cuentas por Cobrar', path: '/cxc',        icon: CreditCard, permission: 'cxc' },
   { label: 'Gastos',         path: '/gastos',        icon: Wallet, permission: 'gastos' },
   { label: 'Usuarios',       path: '/usuarios',      icon: Settings, permission: 'usuarios' },

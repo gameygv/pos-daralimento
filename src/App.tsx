@@ -16,7 +16,6 @@ import CategoriasPage from '@/pages/CategoriasPage';
 import PosPage from '@/pages/PosPage';
 import InventarioPage from '@/pages/InventarioPage';
 import ClientesPage from '@/pages/ClientesPage';
-import ReportesPage from '@/pages/ReportesPage';
 import CxCPage from '@/pages/CxCPage';
 import GastosPage from '@/pages/GastosPage';
 import UsuariosPage from '@/pages/UsuariosPage';
@@ -96,9 +95,6 @@ export default function App() {
                     </Route>
                     <Route element={<PermissionRoute requires="almacenes" />}>
                       <Route path="almacenes" element={<AlmacenesPage />} />
-                    </Route>
-                    <Route element={<PermissionRoute requires="reportes" />}>
-                      <Route path="reportes" element={<ReportesPage />} />
                     </Route>
                     <Route element={<PermissionRoute requires="cxc" />}>
                       <Route path="cxc" element={<CxCPage />} />
