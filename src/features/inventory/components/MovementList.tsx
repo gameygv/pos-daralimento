@@ -94,17 +94,19 @@ function useAllAlmacenStock() {
     queryFn: async () => {
       const { data, error } = (await supabase
         .from('almacen_stock' as never)
-        .select('almacen_id, variant_id, stock, product_variants(product_id)' as never)) as unknown as {
-        data: Array<{ almacen_id: string; variant_id: string; stock: number; product_variants: { product_id: string } }> | null;
+        .select('almacen_id, variant_id, stock, product_variants(product_id, products(is_active))' as never)) as unknown as {
+        data: Array<{ almacen_id: string; variant_id: string; stock: number; product_variants: { product_id: string; products: { is_active: boolean } } }> | null;
         error: { message: string } | null;
       };
       if (error) throw new Error(error.message);
-      return (data ?? []).map((r) => ({
-        almacen_id: r.almacen_id,
-        variant_id: r.variant_id,
-        product_id: r.product_variants?.product_id ?? '',
-        stock: r.stock,
-      }));
+      return (data ?? [])
+        .filter((r) => r.product_variants?.products?.is_active !== false)
+        .map((r) => ({
+          almacen_id: r.almacen_id,
+          variant_id: r.variant_id,
+          product_id: r.product_variants?.product_id ?? '',
+          stock: r.stock,
+        }));
     },
   });
 }

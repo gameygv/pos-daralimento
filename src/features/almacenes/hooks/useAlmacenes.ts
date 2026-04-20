@@ -143,7 +143,7 @@ export function useAlmacenStock(almacenId: string | null) {
       if (!almacenId) return [];
       const { data, error } = (await supabase
         .from('almacen_stock' as never)
-        .select('*, almacenes(nombre), product_variants(sku, product_id, products(name))' as never)
+        .select('*, almacenes(nombre), product_variants(sku, product_id, products(name, is_active))' as never)
         .eq('almacen_id' as never, almacenId as never)) as unknown as {
         data: Array<{
           almacen_id: string;
@@ -151,21 +151,23 @@ export function useAlmacenStock(almacenId: string | null) {
           stock: number;
           min_stock: number;
           almacenes: { nombre: string };
-          product_variants: { sku: string; product_id: string; products: { name: string } };
+          product_variants: { sku: string; product_id: string; products: { name: string; is_active: boolean } };
         }> | null;
         error: { message: string } | null;
       };
       if (error) throw new Error(error.message);
-      return (data ?? []).map((r) => ({
-        almacen_id: r.almacen_id,
-        almacen_nombre: r.almacenes?.nombre ?? '',
-        variant_id: r.variant_id,
-        product_id: r.product_variants?.product_id ?? '',
-        product_name: r.product_variants?.products?.name ?? '',
-        sku: r.product_variants?.sku ?? '',
-        stock: r.stock,
-        min_stock: r.min_stock,
-      }));
+      return (data ?? [])
+        .filter((r) => r.product_variants?.products?.is_active !== false)
+        .map((r) => ({
+          almacen_id: r.almacen_id,
+          almacen_nombre: r.almacenes?.nombre ?? '',
+          variant_id: r.variant_id,
+          product_id: r.product_variants?.product_id ?? '',
+          product_name: r.product_variants?.products?.name ?? '',
+          sku: r.product_variants?.sku ?? '',
+          stock: r.stock,
+          min_stock: r.min_stock,
+        }));
     },
     enabled: !!almacenId,
   });

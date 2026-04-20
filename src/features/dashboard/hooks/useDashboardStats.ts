@@ -24,7 +24,8 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
       .eq('is_active', true),
     supabase
       .from('product_variants' as never)
-      .select('id, stock, min_stock')
+      .select('id, stock, min_stock, products!inner(is_active)' as never)
+      .eq('products.is_active' as never, true as never)
       .gte('stock', 0),
   ]);
 
