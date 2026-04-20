@@ -9,9 +9,12 @@ interface SyncResult {
 
 /**
  * Sync a POS product to WooCommerce.
+ * - Skips inactive products
  * - If no mapping exists: creates product in WC and saves mapping
  * - If mapping exists and WC product exists: updates it
- * - If mapping exists but WC product was deleted: re-creates and updates mapping
+ * - If mapping exists but WC product was deleted: purges trash, re-creates
+ * - Handles SKU conflicts (product in WC trash) by purging first
+ * - Always sets status='publish', sends image, stock, weight
  */
 export async function syncProductToWC(productId: string): Promise<SyncResult> {
   // 1. Get product data
@@ -27,6 +30,7 @@ export async function syncProductToWC(productId: string): Promise<SyncResult> {
     } | null;
   };
   if (!product) return { success: false, message: 'Producto no encontrado' };
+  if (!product.is_active) return { success: false, message: 'Producto desactivado — no se sincroniza' };
 
   // 2. Get "Página Web" almacén
   const { data: paginaWeb } = (await supabase
@@ -37,7 +41,6 @@ export async function syncProductToWC(productId: string): Promise<SyncResult> {
 
   // 3. Get prices from "Página Web" almacén
   let precioPublico = 0;
-  let precioProveedores = 0;
   if (paginaWeb) {
     const { data: precio } = (await supabase
       .from('almacen_precios' as never)
@@ -48,7 +51,6 @@ export async function syncProductToWC(productId: string): Promise<SyncResult> {
       data: { precio_publico: number; precio_proveedores: number } | null;
     };
     precioPublico = precio?.precio_publico ?? 0;
-    precioProveedores = precio?.precio_proveedores ?? 0;
   }
 
   // 4. Get stock from "Página Web" almacén
@@ -89,7 +91,8 @@ export async function syncProductToWC(productId: string): Promise<SyncResult> {
     description: product.description ?? '',
     manage_stock: product.track_stock,
     stock_quantity: stock,
-    status: product.is_active ? 'publish' : 'draft',
+    stock_status: stock > 0 ? 'instock' : 'outofstock',
+    status: 'publish',
   };
 
   if (product.weight_grams && product.weight_grams > 0) {
@@ -129,6 +132,10 @@ export async function syncProductToWC(productId: string): Promise<SyncResult> {
 
     if (res.status === 404) {
       // Product deleted from WC — remove old mapping, will re-create below
+      // Also try to permanently delete it from trash
+      await fetch(`/api/wc-proxy?path=/products/${mapping.wc_product_id}&force=true`, {
+        method: 'DELETE', headers,
+      }).catch(() => {});
       await supabase
         .from('product_wc_map' as never)
         .delete()
@@ -139,7 +146,26 @@ export async function syncProductToWC(productId: string): Promise<SyncResult> {
     }
   }
 
-  // 8. Create new WC product
+  // 8. Before creating, purge any trashed WC product with the same SKU
+  //    (WC rejects duplicate SKUs even if the existing product is in trash)
+  try {
+    const searchRes = await fetch(
+      `/api/wc-proxy?path=/products&sku=${encodeURIComponent(product.sku)}&status=trash`,
+      { method: 'GET', headers },
+    );
+    if (searchRes.ok) {
+      const trashed = await searchRes.json() as Array<{ id: number }>;
+      for (const t of trashed) {
+        await fetch(`/api/wc-proxy?path=/products/${t.id}&force=true`, {
+          method: 'DELETE', headers,
+        });
+      }
+    }
+  } catch {
+    // Non-critical — if purge fails, create may still succeed
+  }
+
+  // 9. Create new WC product
   const createRes = await fetch('/api/wc-proxy?path=/products', {
     method: 'POST', headers, body: JSON.stringify(wcPayload),
   });
@@ -151,7 +177,7 @@ export async function syncProductToWC(productId: string): Promise<SyncResult> {
 
   const wcProduct = await createRes.json() as { id: number; name: string };
 
-  // 9. Save new mapping
+  // 10. Save new mapping
   await supabase
     .from('product_wc_map' as never)
     .insert({

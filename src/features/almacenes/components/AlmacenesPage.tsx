@@ -207,16 +207,17 @@ export function AlmacenesPage() {
     const paginaWeb = almacenes.find((a) => a.nombre === 'Página Web');
     if (!paginaWeb) { toast.error('No se encontró el almacén "Página Web"'); setIsSyncingAll(false); return; }
 
-    // Get all products with precio_publico > 0 in Página Web
+    // Get all ACTIVE products with precio_publico > 0 in Página Web
     const { data: precios } = (await supabase
       .from('almacen_precios' as never)
-      .select('product_id')
+      .select('product_id, products!inner(is_active)' as never)
       .eq('almacen_id' as never, paginaWeb.id as never)
-      .gt('precio_publico' as never, 0 as never)) as unknown as {
+      .gt('precio_publico' as never, 0 as never)
+      .eq('products.is_active' as never, true as never)) as unknown as {
       data: Array<{ product_id: string }> | null;
     };
     const productIds = (precios ?? []).map((p) => p.product_id);
-    if (productIds.length === 0) { toast.error('No hay productos vinculados a Página Web'); setIsSyncingAll(false); return; }
+    if (productIds.length === 0) { toast.error('No hay productos activos vinculados a Página Web'); setIsSyncingAll(false); return; }
 
     setSyncProgress({ done: 0, total: productIds.length });
     let successCount = 0;
