@@ -464,7 +464,6 @@ export function AlmacenesPage() {
                         <tr>
                           <th className="px-3 py-2 text-left font-medium">SKU</th>
                           <th className="px-3 py-2 text-left font-medium">Producto</th>
-                          <th className="px-3 py-2 text-right font-medium">P. Global</th>
                           <th className="px-3 py-2 text-right font-medium">Precio Público</th>
                           <th className="px-3 py-2 text-right font-medium">Precio Proveedores</th>
                         </tr>
@@ -484,9 +483,6 @@ export function AlmacenesPage() {
                               <tr key={p.product_id} className="hover:bg-muted/30">
                                 <td className="px-3 py-2 font-mono text-xs">{p.sku}</td>
                                 <td className="px-3 py-2">{p.product_name}</td>
-                                <td className="px-3 py-2 text-right text-xs text-muted-foreground">
-                                  ${p.base_price.toFixed(2)}
-                                </td>
                                 <td className="px-3 py-2 text-right">
                                   <Input
                                     type="number"

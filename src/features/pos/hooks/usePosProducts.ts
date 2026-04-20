@@ -85,7 +85,7 @@ export function applyAlmacenPrices(
   if (!priceMap || priceMap.size === 0) return products;
   return products.map((p) => {
     const override = priceMap.get(p.id);
-    if (!override) return { ...p, base_price: 0, precio_mayoreo: 0 };
+    if (!override) return p; // sin precio en este almacén — mantener tal cual
     return {
       ...p,
       base_price: override.precio_publico,

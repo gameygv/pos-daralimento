@@ -246,19 +246,19 @@ export function useAlmacenPrecios(almacenId: string | null) {
 
       const precioMap = new Map((precios ?? []).map((p) => [p.product_id, p]));
 
-      // Merge: show all products, with almacen price if exists, otherwise global
+      // Merge: show all products, with almacen price if exists, otherwise 0
       return (products ?? []).map((prod) => {
         const ap = precioMap.get(prod.id);
         return {
           id: ap?.id ?? '',
           almacen_id: almacenId,
           product_id: prod.id,
-          precio_publico: ap?.precio_publico ?? prod.base_price,
-          precio_proveedores: ap?.precio_proveedores ?? prod.precio_mayoreo,
+          precio_publico: ap?.precio_publico ?? 0,
+          precio_proveedores: ap?.precio_proveedores ?? 0,
           product_name: prod.name,
           sku: prod.sku,
-          base_price: prod.base_price,
-          precio_mayoreo: prod.precio_mayoreo,
+          base_price: 0,
+          precio_mayoreo: 0,
         };
       });
     },

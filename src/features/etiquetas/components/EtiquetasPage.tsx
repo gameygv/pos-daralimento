@@ -123,7 +123,7 @@ export function EtiquetasPage() {
   const { data: almacenes = [] } = useAlmacenes();
   const { data: allProductStock = [] } = useProductStock();
 
-  const { data: inventoryProducts = [] } = useQuery<Array<{ id: string; name: string; sku: string; base_price: number; almacen_nombre: string; qty: number }>>({
+  const { data: inventoryProducts = [] } = useQuery<Array<{ id: string; name: string; sku: string; almacen_nombre: string; qty: number }>>({
     queryKey: ['etiquetas-inventory', fechaDesde, fechaHasta, almacenFilter],
     queryFn: async () => {
       if (!fechaDesde && !fechaHasta) return [];
@@ -150,9 +150,9 @@ export function EtiquetasPage() {
       const productIds = [...byProduct.keys()];
       const { data: prods } = (await supabase
         .from('products' as never)
-        .select('id, name, sku, base_price')
+        .select('id, name, sku')
         .in('id' as never, productIds as never)) as unknown as {
-        data: Array<{ id: string; name: string; sku: string; base_price: number }> | null;
+        data: Array<{ id: string; name: string; sku: string }> | null;
       };
       const almName = almacenFilter !== ALL_VALUE ? almacenes.find((a) => a.id === almacenFilter)?.nombre ?? '' : '';
       return (prods ?? []).map((p) => ({ ...p, almacen_nombre: almName, qty: byProduct.get(p.id)?.qty ?? 1 }));
