@@ -53,8 +53,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useWhatsAppConfig } from '@/features/whatsapp/WhatsAppSettings';
-import { sendWhatsAppMessage, sendWhatsAppFile } from '@/features/whatsapp/sendWhatsApp';
-import { renderTicketImage } from '@/features/whatsapp/renderTicketImage';
+import { sendWhatsAppMessage } from '@/features/whatsapp/sendWhatsApp';
 
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat('es-MX', {
@@ -162,22 +161,7 @@ export function NotasList() {
         ? items.map((i) => `  • ${i.can}x ${i.art} — ${formatPrice((i.prec - i.descue) * i.can)}`).join('\n')
         : '';
 
-      // 1. Generate ticket image and upload
-      toast.info('Generando imagen del ticket...');
-      const imageUrl = await renderTicketImage(nota, items, entregaUrl);
-
-      // 2. Send image with caption
-      if (imageUrl) {
-        const imgResult = await sendWhatsAppFile({
-          chatId: waConfig.chat_id,
-          urlFile: imageUrl,
-          fileName: `nota-${folio}.png`,
-          caption: `🛒 Nota #${folio} — ${nota.cliente} — ${totalFormatted}`,
-        });
-        if (!imgResult.success) toast.error(`Error imagen: ${imgResult.message}`);
-      }
-
-      // 3. Send text with details + delivery link
+      // Send text with details + delivery link
       const message = [
         `🛒 *Nueva orden - Nota #${folio}*`,
         '',
