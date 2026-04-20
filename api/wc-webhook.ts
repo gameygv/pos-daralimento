@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const order = req.body;
-    if (!order || !order.line_items) {
+    if (!order || !order.line_items || !Array.isArray(order.line_items) || order.line_items.length === 0) {
       return res.status(200).json({ ok: true, message: 'No line items' });
     }
 

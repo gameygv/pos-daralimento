@@ -88,9 +88,6 @@ export function CleanupSection() {
         // Delete related data in order (no FK cascade, manual cleanup)
         if (variantIds.length > 0) {
           await supabase.from('almacen_stock' as never).delete().in('variant_id' as never, variantIds as never);
-          await supabase.from('kardex' as never).delete().in('variant_id' as never, variantIds as never);
-          await supabase.from('transferencia_items' as never).delete().in('variant_id' as never, variantIds as never);
-          await supabase.from('inventory_movements' as never).delete().in('variant_id' as never, variantIds as never);
         }
         await supabase.from('inventory_movements' as never).delete().eq('product_id' as never, product.id as never);
         await supabase.from('kardex' as never).delete().eq('product_id' as never, product.id as never);
