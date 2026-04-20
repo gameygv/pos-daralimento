@@ -320,7 +320,8 @@ export function useAllProductVariants() {
     queryFn: async () => {
       const { data, error } = (await supabase
         .from('product_variants' as never)
-        .select('id, sku, product_id, products(name)' as never)
+        .select('id, sku, product_id, products!inner(name, is_active)' as never)
+        .eq('products.is_active' as never, true as never)
         .order('sku' as never)) as unknown as {
         data: Array<{
           id: string;

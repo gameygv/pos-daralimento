@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings, useSaveSettings, SettingsForm } from '@/features/settings';
 import { WhatsAppSettings } from '@/features/whatsapp/WhatsAppSettings';
+import { CleanupSection } from '@/features/settings/components/CleanupSection';
 
 export default function ConfiguracionPage() {
   const { data, isLoading, isError } = useSettings();
@@ -41,6 +42,7 @@ export default function ConfiguracionPage() {
             }
           />
           <WhatsAppSettings />
+          <CleanupSection />
         </>
       )}
     </div>

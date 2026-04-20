@@ -148,7 +148,8 @@ export function useProductCountByCategory(categoryId: string | null) {
       const { count, error } = (await supabase
         .from('products' as never)
         .select('id', { count: 'exact', head: true })
-        .eq('category_id' as never, categoryId as never)) as unknown as {
+        .eq('category_id' as never, categoryId as never)
+        .eq('is_active' as never, true as never)) as unknown as {
         count: number | null;
         error: { message: string } | null;
       };

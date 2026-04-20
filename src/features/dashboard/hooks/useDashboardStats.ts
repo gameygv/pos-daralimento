@@ -14,7 +14,8 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   const [productsRes, categoriesRes, activeRes, variantsRes] = await Promise.all([
     supabase
       .from('products' as never)
-      .select('id', { count: 'exact', head: true }),
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true),
     supabase
       .from('categories' as never)
       .select('id', { count: 'exact', head: true }),
