@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getNextCajaFolio } from '@/features/cajas/hooks/useCajas';
 import { logAction } from '@/features/logs/hooks/useLogs';
+import { sendWhatsAppMessage } from '@/features/whatsapp/sendWhatsApp';
 import type { CartItem } from '../types';
 
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'transferencia' | 'trueque' | 'regalo';
@@ -235,6 +236,19 @@ export function useCreateSale() {
         }
       }
 
+      // Fire-and-forget: send WhatsApp notification if enabled
+      if (nota?.id) {
+        sendWhatsAppSaleNotification({
+          folioDisplay,
+          cliente,
+          seller,
+          total: roundedTotal,
+          isPaid,
+          entregaToken: nota.entrega_token,
+          items: items.map((i) => ({ name: i.name || i.sku, quantity: i.quantity, price: i.price })),
+        }).catch(() => {}); // never block the sale
+      }
+
       return {
         folio: nextFolio,
         folioDisplay,
@@ -250,4 +264,48 @@ export function useCreateSale() {
       void queryClient.invalidateQueries({ queryKey: ['notas'] });
     },
   });
+}
+
+// ─── WhatsApp auto-notification (fire-and-forget) ─────
+
+async function sendWhatsAppSaleNotification(params: {
+  folioDisplay: string;
+  cliente: string;
+  seller: string;
+  total: number;
+  isPaid: boolean;
+  entregaToken: string;
+  items: Array<{ name: string; quantity: number; price: number }>;
+}) {
+  // Check if WhatsApp notifications are enabled
+  const { data: waConfig } = (await supabase
+    .from('whatsapp_config' as never)
+    .select('enabled, chat_id')
+    .eq('id', 1)
+    .single()) as unknown as { data: { enabled: boolean; chat_id: string | null } | null };
+
+  if (!waConfig?.enabled || !waConfig.chat_id) return;
+
+  const entregaUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://pos.daralimento.com'}/entrega/${params.entregaToken}`;
+  const totalFormatted = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(params.total);
+
+  const itemLines = params.items
+    .map((i) => `  • ${i.quantity}x ${i.name} — $${(i.price * i.quantity).toFixed(2)}`)
+    .join('\n');
+
+  const message = [
+    `🛒 *Nueva venta - Nota #${params.folioDisplay}*`,
+    '',
+    `👤 Cliente: ${params.cliente}`,
+    `🧑‍💼 Vendedor: ${params.seller}`,
+    '',
+    ...(itemLines ? ['📦 *Productos:*', itemLines, ''] : []),
+    `💰 *Total: ${totalFormatted}*`,
+    `💳 Pago: ${params.isPaid ? '✅ Pagado' : '⏳ Pendiente'}`,
+    '',
+    `📋 *Confirmar entrega:*`,
+    entregaUrl,
+  ].join('\n');
+
+  await sendWhatsAppMessage({ chatId: waConfig.chat_id, message });
 }
