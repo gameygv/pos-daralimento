@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ShoppingCart, Package, Tags, MonitorSmartphone,
-  Warehouse, Users2, BarChart3, CreditCard, Wallet,
+  LayoutDashboard, Package, Tags, MonitorSmartphone,
+  Warehouse, Users2, CreditCard, Wallet,
   Settings, ScrollText, LogOut, PanelLeftClose, PanelLeft,
   FileText,
 } from 'lucide-react';
