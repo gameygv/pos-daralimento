@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
  * Detects barcode scanner input (fast keystrokes ending in Enter).
  * Scanners type characters very fast (<50ms between keys) and end with Enter.
  * Regular typing is slower and won't trigger the callback.
- */oductosen 
+ */
 export function useBarcodeScanner(onScan: (barcode: string) => void) {
   const buffer = useRef('');
   const lastKeyTime = useRef(0);
