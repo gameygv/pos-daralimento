@@ -284,7 +284,10 @@ async function sendWhatsAppSaleNotification(params: {
     .eq('id', 1)
     .single()) as unknown as { data: { enabled: boolean; chat_id: string | null } | null };
 
-  if (!waConfig?.enabled || !waConfig.chat_id) return;
+  if (!waConfig?.enabled || !waConfig.chat_id) {
+    console.log('[WhatsApp] Notificacion desactivada o sin destino', { enabled: waConfig?.enabled, chatId: waConfig?.chat_id });
+    return;
+  }
 
   const entregaUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://pos.daralimento.com'}/entrega/${params.entregaToken}`;
   const totalFormatted = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(params.total);
