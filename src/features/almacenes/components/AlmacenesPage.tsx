@@ -219,24 +219,46 @@ export function AlmacenesPage() {
     const productIds = (precios ?? []).map((p) => p.product_id);
     if (productIds.length === 0) { toast.error('No hay productos activos vinculados a Página Web'); setIsSyncingAll(false); return; }
 
+    // Also fetch product names for error reporting
+    const { data: productNames } = (await supabase
+      .from('products' as never)
+      .select('id, name')
+      .in('id' as never, productIds as never)) as unknown as {
+      data: Array<{ id: string; name: string }> | null;
+    };
+    const nameMap = new Map((productNames ?? []).map((p) => [p.id, p.name]));
+
     setSyncProgress({ done: 0, total: productIds.length });
     let successCount = 0;
     let errorCount = 0;
+    const errors: string[] = [];
 
     for (let i = 0; i < productIds.length; i++) {
       try {
         const result = await syncProductToWC(productIds[i]);
-        if (result.success) successCount++;
-        else errorCount++;
-      } catch {
+        if (result.success) {
+          successCount++;
+        } else {
+          errorCount++;
+          errors.push(`${nameMap.get(productIds[i]) ?? productIds[i]}: ${result.message}`);
+        }
+      } catch (err) {
         errorCount++;
+        errors.push(`${nameMap.get(productIds[i]) ?? productIds[i]}: ${(err as Error).message}`);
       }
       setSyncProgress({ done: i + 1, total: productIds.length });
     }
 
     void queryClient.invalidateQueries({ queryKey: ['product-wc-map'] });
-    logAction('wc_sync_masivo', { total: productIds.length, exitosos: successCount, errores: errorCount });
-    toast.success(`Sincronizacion completada: ${successCount} exitosos, ${errorCount} errores`);
+    logAction('wc_sync_masivo', { total: productIds.length, exitosos: successCount, errores: errorCount, detalles_errores: errors });
+    if (errorCount > 0) {
+      toast.error(`Sync: ${successCount} exitosos, ${errorCount} con error`, {
+        description: errors.join('\n'),
+        duration: 15000,
+      });
+    } else {
+      toast.success(`Sincronizacion completada: ${successCount} productos`);
+    }
     setIsSyncingAll(false);
   }, [almacenes, queryClient]);
 
