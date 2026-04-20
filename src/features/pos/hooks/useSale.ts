@@ -176,7 +176,13 @@ export function useCreateSale() {
         return sum + afterItem - globalDisc;
       }, 0);
 
-      // Create nota de venta (order note) with pending payment/delivery
+      const roundedTotal = Math.round(total * 100) / 100;
+
+      // Determine if this sale is paid (has splitPayments or is not a CxC)
+      const isCxC = paymentNote?.includes('Cuenta por cobrar');
+      const isPaid = !isCxC && (splitPayments ? splitPayments.reduce((s, p) => s + p.amount, 0) >= roundedTotal - 0.01 : true);
+
+      // Create nota de venta
       const { data: nota, error: notaErr } = (await supabase
         .from('notas' as never)
         .insert({
@@ -186,9 +192,11 @@ export function useCreateSale() {
           hora,
           cliente,
           vendedor: seller,
-          total: Math.round(total * 100) / 100,
+          total: roundedTotal,
           metodo_pago: metodoPagoStr,
-          pago_status: 'pendiente',
+          pago_status: isPaid ? 'pagado' : 'pendiente',
+          pagado: isPaid ? roundedTotal : 0,
+          pagado_at: isPaid ? new Date().toISOString() : null,
           entrega_status: 'sin_entregar',
           ...(paymentNote ? { notas_pago: paymentNote } : {}),
           ...(almacenId ? { almacen_id: almacenId } : {}),
@@ -202,10 +210,35 @@ export function useCreateSale() {
       };
       if (notaErr) throw new Error(notaErr.message);
 
+      // Register payment(s) in nota_pagos
+      if (nota?.id && isPaid) {
+        if (splitPayments && splitPayments.length > 0) {
+          // Split payments — one record per method
+          for (const sp of splitPayments) {
+            await supabase.from('nota_pagos' as never).insert({
+              nota_id: nota.id,
+              monto: sp.amount,
+              metodo_pago: sp.method,
+              nota: null,
+              created_by_name: seller,
+            });
+          }
+        } else {
+          // Single payment
+          await supabase.from('nota_pagos' as never).insert({
+            nota_id: nota.id,
+            monto: roundedTotal,
+            metodo_pago: metodoPago,
+            nota: null,
+            created_by_name: seller,
+          });
+        }
+      }
+
       return {
         folio: nextFolio,
         folioDisplay,
-        total,
+        total: roundedTotal,
         items: items.reduce((sum, i) => sum + i.quantity, 0),
         notaId: nota?.id ?? '',
         entregaToken: nota?.entrega_token ?? '',
