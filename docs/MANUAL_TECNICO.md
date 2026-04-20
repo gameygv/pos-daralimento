@@ -23,7 +23,7 @@ pos-daralimento/
 │   │   ├── etiquetas/      # Etiquetas QR para Cricut
 │   │   ├── whatsapp/       # Notificaciones WhatsApp
 │   │   ├── reports/        # Reportes avanzados
-│   │   ├── settings/       # Configuracion del negocio
+│   │   ├── settings/       # Configuracion del negocio + depuracion
 │   │   ├── auth/           # Autenticacion
 │   │   ├── cajas/          # Cajas registradoras
 │   │   ├── logs/           # Logs de auditoria
@@ -82,13 +82,17 @@ WooCommerce → wc-webhook.ts → POS (ordenes entrantes)
 
 ### Sync individual (`syncProductToWC.ts`)
 - Boton en ficha de producto + boton en lista de productos (columna WC)
+- **Guard clause**: productos desactivados (`is_active=false`) se rechazan inmediatamente
 - Si no existe en WC: POST → crea + guarda mapping
 - Si existe: PUT → actualiza nombre, precio, stock, imagen, peso
-- Si fue borrado de WC (404): DELETE mapping → POST nuevo → guarda mapping
-- Datos sincronizados: name, sku, regular_price (precio publico Pagina Web), stock (Pagina Web), weight, image, status
+- Si fue borrado de WC (404): force-delete del anterior, purga trash por SKU, re-crea
+- **Purga de trash**: antes de crear, busca productos en WC trash con mismo SKU y los elimina permanentemente (evita error `product_invalid_sku`)
+- Siempre `status: 'publish'` (nunca draft para productos activos)
+- Datos sincronizados: name, sku, regular_price, stock_quantity, stock_status, weight, image, status, manage_stock, description
 
 ### Sync masivo (AlmacenesPage)
-- Boton en tarjeta "Pagina Web" → sincroniza TODOS los productos vinculados
+- Boton en tarjeta "Pagina Web" → sincroniza TODOS los productos **activos** vinculados
+- Filtra por `almacen_precios.precio_publico > 0` AND `products.is_active = true`
 - Progreso visible: "Sincronizando 15/172..."
 
 ### Sync stock automatico (`syncStockToWC.ts`)
@@ -191,7 +195,46 @@ PaymentDialog → createSale (useSale.ts)
 
 ---
 
-## 8. Etiquetas QR (Cricut)
+## 8. Productos Inactivos (regla global)
+
+### Regla fundamental
+> Los productos con `is_active = false` son INVISIBLES en todo el sistema. Se tratan como si estuvieran en papelera de reciclaje.
+
+### Donde se aplica el filtro `is_active = true`
+| Modulo | Hook / Query | Archivo |
+|--------|-------------|---------|
+| POS | `usePosProducts` | `src/features/pos/hooks/usePosProducts.ts` |
+| Inventario | `useProductStock` | `src/features/inventory/hooks/useInventory.ts` |
+| Inventario expandido | `useAllAlmacenStock` | `src/features/inventory/components/MovementList.tsx` |
+| Stock por almacen | `useAlmacenStock` | `src/features/almacenes/hooks/useAlmacenes.ts` |
+| Precios por almacen | `useAlmacenPrecios` | `src/features/almacenes/hooks/useAlmacenes.ts` |
+| Variantes (dropdown) | `useAllProductVariants` | `src/features/almacenes/hooks/useAlmacenes.ts` |
+| Dashboard stats | `useDashboardStats` | `src/features/dashboard/hooks/useDashboardStats.ts` |
+| Conteo por categoria | `useProductCountByCategory` | `src/features/catalog/categories/hooks/useCategories.ts` |
+| Sync WC individual | `syncProductToWC` | `src/features/catalog/products/utils/syncProductToWC.ts` |
+| Sync WC masivo | `handleSyncAllWC` | `src/features/almacenes/components/AlmacenesPage.tsx` |
+
+### Donde NO se filtra (intencionalmente)
+| Modulo | Razon |
+|--------|-------|
+| `useProductById` | Para poder ver/editar un producto desactivado y reactivarlo |
+| `ProductList` (con switch Inactivos) | Para que el admin pueda ver y gestionar productos inactivos |
+| Historial de movimientos (kardex) | Para preservar trazabilidad historica |
+| `vtatkt` (items de venta) | Para preservar historial de ventas |
+
+### Depuracion (eliminacion permanente)
+- **Ubicacion:** Configuracion → Depuracion de productos
+- **Archivo:** `src/features/settings/components/CleanupSection.tsx`
+- **Logica:**
+  - Lista productos desactivados
+  - Divide en "eliminables" (sin ventas en `vtatkt`) y "protegidos" (con ventas)
+  - Eliminacion en cascada: `almacen_stock` → `kardex` → `transferencia_items` → `inventory_movements` → `almacen_precios` → `product_wc_map` → `product_categories` → `product_attributes` → `product_option_groups` → `orden_compra_items` → `product_variants` → `products`
+  - Dialog de confirmacion
+  - Log de auditoria (`depuracion_productos`)
+
+---
+
+## 9. Etiquetas QR (Cricut)
 
 ### Generacion
 - PNG a 300 DPI via Canvas API
@@ -214,7 +257,7 @@ PaymentDialog → createSale (useSale.ts)
 
 ---
 
-## 9. Calculadora de Precio por Peso
+## 10. Calculadora de Precio por Peso
 
 ### Ubicacion
 Icono calculadora en lista de productos (antes del lapiz de editar)
@@ -230,7 +273,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 10. Logs de Auditoria
+## 11. Logs de Auditoria
 
 ### Funcion
 `logAction(action, details)` — fire-and-forget, registra en `audit_log`
@@ -250,10 +293,11 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 | `pago_registrado` | useRegistrarPago |
 | `nota_cancelada` | useCancelNota |
 | `nota_eliminada` | useDeleteNota |
+| `depuracion_productos` | CleanupSection |
 
 ---
 
-## 11. Puntos de Venta (Almacenes)
+## 12. Puntos de Venta (Almacenes)
 
 ### Funciones
 - Crear, editar nombre/descripcion/direccion/cliente
@@ -268,7 +312,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 12. Migraciones SQL
+## 13. Migraciones SQL
 
 | # | Archivo | Descripcion |
 |---|---------|-------------|
@@ -285,7 +329,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 13. Variables de Entorno (Vercel)
+## 14. Variables de Entorno (Vercel)
 
 | Variable | Uso |
 |----------|-----|
@@ -298,7 +342,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 14. Componentes Principales y Relaciones
+## 15. Componentes Principales y Relaciones
 
 ```
 App.tsx
@@ -325,10 +369,34 @@ App.tsx
 │   ├── EtiquetasPage (PNG para Cricut)
 │   ├── ConfiguracionPage
 │   │   ├── SettingsForm (empresa, ticket, folios)
-│   │   └── WhatsAppSettings (destino, prueba)
+│   │   ├── WhatsAppSettings (destino, prueba)
+│   │   └── CleanupSection (depuracion productos inactivos)
 │   └── EntregaPage (publica, sin auth)
 └── api/ (serverless)
     ├── wc-proxy.ts
     ├── wc-webhook.ts
     └── whatsapp.ts
 ```
+
+---
+
+## 16. Relaciones FK de `products`
+
+```
+products
+├── product_variants (product_id) → almacen_stock, kardex, transferencia_items,
+│                                    inventory_movements, orden_compra_items
+├── almacen_precios (product_id)
+├── product_wc_map (product_id)
+├── product_categories (product_id)
+├── product_attributes (product_id)
+├── product_option_groups (product_id)
+├── inventory_movements (product_id)
+├── kardex (product_id)
+├── transferencia_items (product_id)
+├── orden_compra_items (product_id)
+└── vtatkt (product_id) — SIN FK constraint, referencia blanda
+```
+
+> Al eliminar un producto, se deben borrar en cascada todos los registros hijos.
+> Productos con registros en `vtatkt` NO se eliminan para preservar historial.
