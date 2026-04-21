@@ -1,6 +1,6 @@
 # POS DAR Alimento — Manual Tecnico
 
-> Generado: 2026-04-20
+> Actualizado: 2026-04-21
 > Stack: React 19 + TypeScript + Vite + Supabase + Vercel + TanStack Query
 
 ---
@@ -129,10 +129,12 @@ POS → api/whatsapp.ts (proxy) → Green API → WhatsApp
 ### Flujo automatico
 ```
 useSale → createSale → nota creada
-  → sendWhatsAppSaleNotification() [fire-and-forget]
-    → consulta whatsapp_config.enabled
-    → si activo: envia texto con desglose + link entrega
+  → SOLO si entregado=true:
+    → sendWhatsAppSaleNotification() [fire-and-forget]
+      → consulta whatsapp_config.enabled
+      → si activo: envia texto con desglose + link entrega
 ```
+> Si el pedido no fue entregado (toggle "No, pendiente" en PaymentDialog), NO se envia WhatsApp.
 
 ### Flujo manual
 - Boton WhatsApp (icono oficial verde) en listado de notas
@@ -164,19 +166,50 @@ useSale → createSale → nota creada
 
 ### Flujo en POS
 ```
-PaymentDialog → createSale (useSale.ts)
+PaymentDialog → toggle "¿Se entrega ahora?" → createSale (useSale.ts)
   → Si pago completo: nota con pago_status='pagado', pagado=total
     + registro en nota_pagos
   → Si CxC: nota con pago_status='pendiente', pagado=0
   → Si split payment: multiples registros en nota_pagos
+  → Si entregado=true: entrega_status='entregado' + entregado_at + WhatsApp
+  → Si entregado=false: entrega_status='sin_entregar' + NO WhatsApp
 ```
+
+### Toggle de entrega
+- Antes de confirmar pago, el usuario elige: **"Si, entregado"** (default) o **"No, pendiente"**
+- Si no se entrega, NO se envia notificacion WhatsApp automatica
+- Aplica a todos los flujos: pago completo, dividido, CxC
+- **Archivo:** `src/features/pos/components/PaymentDialog.tsx`
 
 ### Pago posterior (desde Notas)
 - Boton "Pagar" → `useRegistrarPago` → inserta en `nota_pagos` + actualiza `pagado`
 
 ---
 
-## 7. Inventario y Kardex
+## 7. Cuentas por Cobrar (CxC)
+
+### Vista principal (`CxCList.tsx`)
+- Tarjetas resumen: Total por Cobrar, Clientes con Saldo, Notas Pendientes
+- Agrupadas por cliente, ordenadas por saldo descendente
+- Cada nota muestra folio, fecha, total, pagado, saldo + boton "Pagar"
+
+### Detalle expandido de nota
+Al hacer click en una nota se muestran 3 secciones:
+1. **Articulos**: tabla con producto, cantidad, precio, descuento y subtotal
+2. **Resumen**: barra visual con Total / Pagado / Resta
+3. **Pagos registrados**: historial de abonos con fecha, metodo y monto
+
+### Formula de subtotal
+`subtotal = (precio - descuento_por_unidad) * cantidad`
+> `descue` en `vtatkt` es descuento POR UNIDAD, no total de linea.
+
+### Archivos
+- `src/features/cxc/components/CxCList.tsx`
+- `src/features/notas/hooks/useNotas.ts` (useNotaItems, useNotaPagos, useRegistrarPago)
+
+---
+
+## 8. Inventario y Kardex
 
 ### Tablas
 | Tabla | Uso |
@@ -185,7 +218,14 @@ PaymentDialog → createSale (useSale.ts)
 | `kardex` | Trazabilidad de movimientos |
 | `product_variants` | Stock total (suma de todos los almacenes) |
 
-### Ajustes de stock (`useAdjustAlmacenStock`)
+### Descuento de stock al vender (`useSale`)
+1. Valida existencia en `product_variants.stock`
+2. Decrementa `product_variants.stock` (global)
+3. Si hay `almacenId`: decrementa `almacen_stock` del almacen seleccionado
+4. Crea entrada en `kardex` tipo `'venta'` (referencia al folio, vendedor, stock anterior/nuevo)
+5. Invalida caches: `almacen-stock`, `product-almacen-stock`, `product-stock`, `pos-almacen-stock-map`, `kardex`
+
+### Ajustes manuales de stock (`useAdjustAlmacenStock`)
 1. Calcula nuevo stock
 2. Upsert `almacen_stock`
 3. Inserta en `kardex`
@@ -193,9 +233,15 @@ PaymentDialog → createSale (useSale.ts)
 5. Log de auditoria
 6. Si almacen es "Pagina Web" → sync stock a WC
 
+### Inventario al crear producto
+- La tabla de inventario y precios por punto de venta se muestra al crear un producto nuevo
+- Al presionar "Crear", se guarda el producto y luego se insertan `almacen_stock` y `almacen_precios` por cada almacen con valores ingresados
+- Recalcula `product_variants.stock` con el total sumado
+- Si almacen es "Pagina Web" → sync stock a WC
+
 ---
 
-## 8. Productos Inactivos (regla global)
+## 9. Productos Inactivos (regla global)
 
 ### Regla fundamental
 > Los productos con `is_active = false` son INVISIBLES en todo el sistema. Se tratan como si estuvieran en papelera de reciclaje.
@@ -234,7 +280,7 @@ PaymentDialog → createSale (useSale.ts)
 
 ---
 
-## 9. Etiquetas QR (Cricut)
+## 10. Etiquetas QR (Cricut)
 
 ### Generacion
 - PNG a 300 DPI via Canvas API
@@ -257,7 +303,7 @@ PaymentDialog → createSale (useSale.ts)
 
 ---
 
-## 10. Calculadora de Precio por Peso
+## 11. Calculadora de Precio por Peso
 
 ### Ubicacion
 Icono calculadora en lista de productos (antes del lapiz de editar)
@@ -273,7 +319,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 11. Logs de Auditoria
+## 12. Logs de Auditoria
 
 ### Funcion
 `logAction(action, details)` — fire-and-forget, registra en `audit_log`
@@ -297,7 +343,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 12. Puntos de Venta (Almacenes)
+## 13. Puntos de Venta (Almacenes)
 
 ### Funciones
 - Crear, editar nombre/descripcion/direccion/cliente
@@ -312,7 +358,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 13. Migraciones SQL
+## 14. Migraciones SQL
 
 | # | Archivo | Descripcion |
 |---|---------|-------------|
@@ -329,7 +375,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 14. Variables de Entorno (Vercel)
+## 15. Variables de Entorno (Vercel)
 
 | Variable | Uso |
 |----------|-----|
@@ -342,7 +388,7 @@ Icono calculadora en lista de productos (antes del lapiz de editar)
 
 ---
 
-## 15. Componentes Principales y Relaciones
+## 16. Componentes Principales y Relaciones
 
 ```
 App.tsx
@@ -351,7 +397,7 @@ App.tsx
 │   ├── PosPage → PosScreen
 │   │   ├── ProductGrid (productos con precios de almacen)
 │   │   ├── Cart (carrito)
-│   │   └── PaymentDialog → useSale → nota + pagos + WhatsApp
+│   │   └── PaymentDialog → toggle entrega → useSale → nota + pagos + stock + kardex + WhatsApp (si entregado)
 │   ├── NotasPage → NotasList
 │   │   ├── Pagos, entrega, WhatsApp manual
 │   │   └── Expandible: items + historial pagos
@@ -380,7 +426,7 @@ App.tsx
 
 ---
 
-## 16. Relaciones FK de `products`
+## 17. Relaciones FK de `products`
 
 ```
 products
