@@ -10,6 +10,8 @@ import {
   Split,
   Trash2,
   Plus,
+  Package,
+  Clock,
 } from 'lucide-react';
 import {
   Dialog,
@@ -119,6 +121,8 @@ export function PaymentDialog({
   const [splits, setSplits] = useState<SplitPayment[]>([]);
   const [splitMethod, setSplitMethod] = useState<MetodoPago>('efectivo');
   const [splitAmount, setSplitAmount] = useState<string>('');
+  // Delivery status
+  const [entregado, setEntregado] = useState(true);
   // Result
   const [resultFolio, setResultFolio] = useState<number>(0);
   const [resultFolioDisplay, setResultFolioDisplay] = useState<string>('');
@@ -153,6 +157,7 @@ export function PaymentDialog({
     setSplits([]);
     setSplitMethod('efectivo');
     setSplitAmount('');
+    setEntregado(true);
     setResultFolio(0);
     setResultFolioDisplay('');
     setResultEntregaToken('');
@@ -233,6 +238,7 @@ export function PaymentDialog({
       globalDiscountPct,
       splitPayments: splitMode ? splits.map((s) => ({ method: s.method, amount: s.amount })) : undefined,
       paymentNote: paymentNotes.length > 0 ? paymentNotes.join(' | ') : undefined,
+      entregado,
     });
 
     // Increment coupon usage if one was applied
@@ -469,6 +475,38 @@ export function PaymentDialog({
                   </div>
                 )}
 
+                {/* Delivery status */}
+                <div>
+                  <p className="mb-2 text-sm font-medium text-gray-700">¿Se entrega ahora?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setEntregado(true)}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-all ${
+                        entregado
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <Package className="h-4 w-4" />
+                      Sí, entregado
+                    </button>
+                    <button
+                      onClick={() => setEntregado(false)}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-all ${
+                        !entregado
+                          ? 'border-amber-500 bg-amber-50 text-amber-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <Clock className="h-4 w-4" />
+                      No, pendiente
+                    </button>
+                  </div>
+                  {!entregado && (
+                    <p className="mt-1 text-[11px] text-amber-600">No se enviará notificación por WhatsApp</p>
+                  )}
+                </div>
+
                 {/* Confirm button */}
                 <Button
                   className="h-14 w-full rounded-lg bg-teal-600 text-lg font-bold text-white shadow-md hover:bg-teal-700 active:bg-teal-800"
@@ -504,9 +542,11 @@ export function PaymentDialog({
                         cajaId,
                         cajaSessionId,
                         globalDiscountPct,
+                        almacenId,
                         paymentNote: partialPaid > 0
                           ? `Cuenta por cobrar (pago parcial ${formatPrice(partialPaid)})`
                           : 'Cuenta por cobrar',
+                        entregado,
                       });
                       // Register partial payment in nota_pagos if amount > 0
                       if (partialPaid > 0 && result.notaId) {
@@ -650,6 +690,38 @@ export function PaymentDialog({
                     />
                   </div>
                 )}
+
+                {/* Delivery status (split mode) */}
+                <div>
+                  <p className="mb-2 text-sm font-medium text-gray-700">¿Se entrega ahora?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setEntregado(true)}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-all ${
+                        entregado
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <Package className="h-4 w-4" />
+                      Sí, entregado
+                    </button>
+                    <button
+                      onClick={() => setEntregado(false)}
+                      className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-all ${
+                        !entregado
+                          ? 'border-amber-500 bg-amber-50 text-amber-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <Clock className="h-4 w-4" />
+                      No, pendiente
+                    </button>
+                  </div>
+                  {!entregado && (
+                    <p className="mt-1 text-[11px] text-amber-600">No se enviará notificación por WhatsApp</p>
+                  )}
+                </div>
 
                 {/* Confirm split */}
                 <Button

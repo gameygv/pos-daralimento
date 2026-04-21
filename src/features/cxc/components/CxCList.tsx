@@ -27,6 +27,7 @@ import {
 import {
   useNotas,
   useNotaPagos,
+  useNotaItems,
   useRegistrarPago,
   type NotaRow,
 } from '@/features/notas/hooks/useNotas';
@@ -47,13 +48,92 @@ const PAGO_METHODS = [
   { id: 'regalo', label: 'Regalo', icon: Gift },
 ];
 
+/** Sub-component: expanded details for a nota (items + payments) */
+function NotaExpandedDetails({ nota, colSpan }: { nota: NotaRow; colSpan: number }) {
+  const { data: items = [], isLoading: loadingItems } = useNotaItems(nota.folio);
+  const { data: pagos = [], isLoading: loadingPagos } = useNotaPagos(nota.id);
+  const saldo = nota.total - nota.pagado;
+
+  return (
+    <TableRow>
+      <TableCell colSpan={colSpan} className="bg-muted/20 p-0">
+        <div className="px-6 py-3 space-y-3">
+          {/* Artículos de la nota */}
+          <div>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Artículos</p>
+            {loadingItems ? (
+              <p className="text-xs text-muted-foreground">Cargando...</p>
+            ) : items.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Sin artículos</p>
+            ) : (
+              <div className="rounded border bg-white">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/30">
+                    <tr>
+                      <th className="px-3 py-1 text-left font-medium">Producto</th>
+                      <th className="px-3 py-1 text-center font-medium">Cant.</th>
+                      <th className="px-3 py-1 text-right font-medium">Precio</th>
+                      <th className="px-3 py-1 text-right font-medium">Desc.</th>
+                      <th className="px-3 py-1 text-right font-medium">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {items.map((item, idx) => {
+                      const subtotal = (item.prec - item.descue) * item.can;
+                      return (
+                        <tr key={idx}>
+                          <td className="px-3 py-1">{item.art}</td>
+                          <td className="px-3 py-1 text-center">{item.can}</td>
+                          <td className="px-3 py-1 text-right">{formatPrice(item.prec)}</td>
+                          <td className="px-3 py-1 text-right">{item.descue > 0 ? formatPrice(item.descue) : '—'}</td>
+                          <td className="px-3 py-1 text-right font-medium">{formatPrice(subtotal)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Resumen de saldo */}
+          <div className="flex items-center justify-between rounded bg-amber-50 px-3 py-1.5 text-xs">
+            <span className="font-medium">Total: {formatPrice(nota.total)}</span>
+            <span className="text-green-700">Pagado: {formatPrice(nota.pagado)}</span>
+            <span className="font-bold text-amber-700">Resta: {formatPrice(saldo)}</span>
+          </div>
+
+          {/* Pagos registrados */}
+          <div>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pagos registrados</p>
+            {loadingPagos ? (
+              <p className="text-xs text-muted-foreground">Cargando...</p>
+            ) : pagos.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Sin pagos</p>
+            ) : (
+              <div className="space-y-1">
+                {pagos.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between rounded bg-white px-3 py-1 text-xs">
+                    <span>{new Date(p.created_at).toLocaleDateString('es-MX')} — <span className="capitalize">{p.metodo_pago}</span></span>
+                    <span className="font-semibold text-green-700">{formatPrice(p.monto)}</span>
+                    {p.nota && <span className="text-muted-foreground ml-2">({p.nota})</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export function CxCList() {
   // Fetch notas with pending payment
   const { data: allNotas = [], isLoading } = useNotas({ pagoStatus: 'pendiente' });
   // Fetch paid notas that were CxC (have payment records = were paid later)
   const { data: paidNotas = [], isLoading: loadingPaid } = useNotas({ pagoStatus: 'pagado' });
   const [expandedNota, setExpandedNota] = useState<string | null>(null);
-  const { data: expandedPagos = [] } = useNotaPagos(expandedNota);
   const registrarPago = useRegistrarPago();
   const [showHistorial, setShowHistorial] = useState(false);
 
@@ -216,26 +296,7 @@ export function CxCList() {
                               </TableCell>
                             </TableRow>
                             {isExpanded && (
-                              <TableRow key={`${nota.id}-pagos`}>
-                                <TableCell colSpan={7} className="bg-muted/20 p-0">
-                                  <div className="px-6 py-2">
-                                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pagos registrados</p>
-                                    {expandedPagos.length === 0 ? (
-                                      <p className="text-xs text-muted-foreground">Sin pagos</p>
-                                    ) : (
-                                      <div className="space-y-1">
-                                        {expandedPagos.map((p) => (
-                                          <div key={p.id} className="flex items-center justify-between rounded bg-white px-3 py-1 text-xs">
-                                            <span>{new Date(p.created_at).toLocaleDateString('es-MX')} — <span className="capitalize">{p.metodo_pago}</span></span>
-                                            <span className="font-semibold text-green-700">{formatPrice(p.monto)}</span>
-                                            {p.nota && <span className="text-muted-foreground ml-2">({p.nota})</span>}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
+                              <NotaExpandedDetails key={`${nota.id}-details`} nota={nota} colSpan={7} />
                             )}
                           </>
                         );
@@ -304,25 +365,7 @@ export function CxCList() {
                               <TableCell className="text-right text-sm text-green-700">{formatPrice(nota.pagado)}</TableCell>
                             </TableRow>
                             {isExp && (
-                              <TableRow key={`${nota.id}-hist`}>
-                                <TableCell colSpan={6} className="bg-muted/20 p-0">
-                                  <div className="px-6 py-2">
-                                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Pagos registrados</p>
-                                    {expandedPagos.length === 0 ? (
-                                      <p className="text-xs text-muted-foreground">Pago directo</p>
-                                    ) : (
-                                      <div className="space-y-1">
-                                        {expandedPagos.map((p) => (
-                                          <div key={p.id} className="flex items-center justify-between rounded bg-white px-3 py-1 text-xs">
-                                            <span>{new Date(p.created_at).toLocaleDateString('es-MX')} — <span className="capitalize">{p.metodo_pago}</span></span>
-                                            <span className="font-semibold text-green-700">{formatPrice(p.monto)}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
+                              <NotaExpandedDetails key={`${nota.id}-hist-details`} nota={nota} colSpan={6} />
                             )}
                           </>
                         );

@@ -23,6 +23,7 @@ interface CreateSaleParams {
   splitPayments?: SplitPaymentEntry[];
   paymentNote?: string;
   almacenId?: string | null;
+  entregado?: boolean;
 }
 
 interface SaleResult {
@@ -38,7 +39,7 @@ export function useCreateSale() {
   const queryClient = useQueryClient();
 
   return useMutation<SaleResult, Error, CreateSaleParams>({
-    mutationFn: async ({ items, metodoPago, seller, cliente, cajaId, cajaSessionId, globalDiscountPct = 0, splitPayments, paymentNote, almacenId }) => {
+    mutationFn: async ({ items, metodoPago, seller, cliente, cajaId, cajaSessionId, globalDiscountPct = 0, splitPayments, paymentNote, almacenId, entregado = false }) => {
       let nextFolio: number;
       let folioDisplay: string;
 
@@ -149,7 +150,7 @@ export function useCreateSale() {
       };
       if (insertErr) throw new Error(insertErr.message);
 
-      // Discount stock from product_variants for products that track stock
+      // Discount stock from product_variants + almacen_stock + kardex
       for (const item of items) {
         if (!item.id) continue;
         const { data: variants } = (await supabase
@@ -161,11 +162,50 @@ export function useCreateSale() {
         };
         if (variants && variants.length > 0) {
           const variant = variants[0];
-          const newStock = Math.max(0, variant.stock - item.quantity);
+          const newGlobalStock = Math.max(0, variant.stock - item.quantity);
+
+          // Update global variant stock
           await supabase
             .from('product_variants' as never)
-            .update({ stock: newStock } as never)
+            .update({ stock: newGlobalStock } as never)
             .eq('id' as never, variant.id as never);
+
+          // Update almacen_stock if almacenId is provided
+          if (almacenId) {
+            const { data: almStock } = (await supabase
+              .from('almacen_stock' as never)
+              .select('stock')
+              .eq('almacen_id' as never, almacenId as never)
+              .eq('variant_id' as never, variant.id as never)
+              .maybeSingle()) as unknown as { data: { stock: number } | null };
+
+            const prevAlmStock = almStock?.stock ?? 0;
+            const newAlmStock = Math.max(0, prevAlmStock - item.quantity);
+
+            await supabase
+              .from('almacen_stock' as never)
+              .upsert({
+                almacen_id: almacenId,
+                variant_id: variant.id,
+                stock: newAlmStock,
+              }, { onConflict: 'almacen_id,variant_id' } as never);
+
+            // Create kardex entry for traceability
+            await supabase
+              .from('kardex' as never)
+              .insert({
+                almacen_id: almacenId,
+                variant_id: variant.id,
+                product_id: item.id,
+                tipo: 'venta',
+                cantidad: item.quantity,
+                stock_anterior: prevAlmStock,
+                stock_nuevo: newAlmStock,
+                referencia: folioDisplay,
+                comentario: `Venta nota #${folioDisplay} — ${cliente}`,
+                created_by_name: seller,
+              } as never);
+          }
         }
       }
 
@@ -198,7 +238,8 @@ export function useCreateSale() {
           pago_status: isPaid ? 'pagado' : 'pendiente',
           pagado: isPaid ? roundedTotal : 0,
           pagado_at: isPaid ? new Date().toISOString() : null,
-          entrega_status: 'sin_entregar',
+          entrega_status: entregado ? 'entregado' : 'sin_entregar',
+          entregado_at: entregado ? new Date().toISOString() : null,
           ...(paymentNote ? { notas_pago: paymentNote } : {}),
           ...(almacenId ? { almacen_id: almacenId } : {}),
           ...(cajaId ? { caja_id: cajaId } : {}),
@@ -236,8 +277,8 @@ export function useCreateSale() {
         }
       }
 
-      // Fire-and-forget: send WhatsApp notification if enabled
-      if (nota?.id) {
+      // Fire-and-forget: send WhatsApp notification only if order is delivered
+      if (nota?.id && entregado) {
         sendWhatsAppSaleNotification({
           folioDisplay,
           cliente,
@@ -262,6 +303,11 @@ export function useCreateSale() {
       logAction('venta', { folio: result.folio, folioDisplay: result.folioDisplay, total: result.total, items: result.items });
       void queryClient.invalidateQueries({ queryKey: ['settings'] });
       void queryClient.invalidateQueries({ queryKey: ['notas'] });
+      void queryClient.invalidateQueries({ queryKey: ['almacen-stock'] });
+      void queryClient.invalidateQueries({ queryKey: ['product-almacen-stock'] });
+      void queryClient.invalidateQueries({ queryKey: ['product-stock'] });
+      void queryClient.invalidateQueries({ queryKey: ['pos-almacen-stock-map'] });
+      void queryClient.invalidateQueries({ queryKey: ['kardex'] });
     },
   });
 }

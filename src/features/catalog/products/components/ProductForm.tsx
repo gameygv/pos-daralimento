@@ -83,13 +83,15 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: almacenes = [] } = useAlmacenes();
-  const { data: productPrecios = [] } = useProductAlmacenPrecios(isEditing ? productId : null);
-  const { data: productStocks = [] } = useProductAlmacenStock(isEditing ? productId : null);
+  const { data: productPrecios = [], dataUpdatedAt: preciosUpdatedAt } = useProductAlmacenPrecios(isEditing ? productId : null);
+  const { data: productStocks = [], dataUpdatedAt: stocksUpdatedAt } = useProductAlmacenStock(isEditing ? productId : null);
   const upsertPrecio = useUpsertAlmacenPrecio();
   const adjustStock = useAdjustAlmacenStock();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const [isSyncingWC, setIsSyncingWC] = useState(false);
+  // Version key to re-mount input rows when async data loads or after save
+  const dataVersion = `${preciosUpdatedAt}-${stocksUpdatedAt}`;
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -241,6 +243,74 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
         }
       }
 
+      // Save almacén stock & prices on creation
+      if (!isEditing && savedProductId && almacenes.length > 0) {
+        // Get the default variant (created by DB trigger on product creation)
+        const { data: variant } = await supabase
+          .from('product_variants' as never)
+          .select('id')
+          .eq('product_id' as never, savedProductId as never)
+          .limit(1)
+          .single() as unknown as { data: { id: string } | null };
+
+        for (const alm of almacenes) {
+          const pubEl = document.getElementById(`alm-pub-${alm.id}`) as HTMLInputElement | null;
+          const provEl = document.getElementById(`alm-prov-${alm.id}`) as HTMLInputElement | null;
+          const stockEl = document.getElementById(`alm-stock-${alm.id}`) as HTMLInputElement | null;
+          if (!pubEl && !provEl && !stockEl) continue;
+
+          const precioPublico = parseFloat(pubEl?.value ?? '0') || 0;
+          const precioProveedores = parseFloat(provEl?.value ?? '0') || 0;
+          const newStock = parseInt(stockEl?.value ?? '0') || 0;
+
+          // Skip rows where nothing was filled
+          if (precioPublico === 0 && precioProveedores === 0 && newStock === 0) continue;
+
+          // Upsert prices
+          if (precioPublico > 0 || precioProveedores > 0) {
+            await upsertPrecio.mutateAsync({
+              almacenId: alm.id,
+              productId: savedProductId,
+              precioPublico,
+              precioProveedores,
+            });
+          }
+
+          // Upsert stock
+          if (variant && newStock > 0) {
+            await supabase
+              .from('almacen_stock' as never)
+              .upsert({
+                almacen_id: alm.id,
+                variant_id: variant.id,
+                stock: newStock,
+              }, { onConflict: 'almacen_id,variant_id' } as never);
+
+            // Sync stock to WC if "Página Web"
+            if (alm.nombre === 'Página Web') {
+              syncStockToWC(savedProductId, newStock);
+            }
+          }
+        }
+
+        // Update total variant stock
+        if (variant) {
+          const { data: allStocks } = await supabase
+            .from('almacen_stock' as never)
+            .select('stock')
+            .eq('variant_id' as never, variant.id as never) as unknown as { data: { stock: number }[] | null };
+          const totalStock = (allStocks ?? []).reduce((s, r) => s + r.stock, 0);
+          await supabase
+            .from('product_variants' as never)
+            .update({ stock: totalStock })
+            .eq('id' as never, variant.id as never);
+        }
+
+        void queryClient.invalidateQueries({ queryKey: ['product-almacen-stock'] });
+        void queryClient.invalidateQueries({ queryKey: ['product-stock'] });
+        void queryClient.invalidateQueries({ queryKey: ['almacen-stock'] });
+      }
+
       toast.success(isEditing ? 'Producto actualizado' : 'Producto creado');
       onOpenChange(false);
     } catch (err) {
@@ -385,15 +455,10 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                 placeholder="Ej: 500"
               />
             </div>
-            {!isEditing && (
-              <p className="text-xs text-muted-foreground">
-                Los precios se configuran por Punto de Venta despues de crear el producto.
-              </p>
-            )}
           </div>
 
-          {/* Section: Precios por Punto de Venta (edit mode only) */}
-          {isEditing && productId && almacenes.length > 0 && (
+          {/* Section: Inventario y Precios por Punto de Venta */}
+          {almacenes.length > 0 && (
             <>
               <Separator />
               <div className="space-y-3">
@@ -408,17 +473,15 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                         <th className="px-3 py-1.5 text-center text-xs font-medium">Stock</th>
                         <th className="px-3 py-1.5 text-right text-xs font-medium">P. Publico</th>
                         <th className="px-3 py-1.5 text-right text-xs font-medium">P. Proveedores</th>
-                        <th className="px-3 py-1.5 w-20"></th>
+                        {isEditing && <th className="px-3 py-1.5 w-20"></th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y">
                       {almacenes.map((alm) => {
                         const existingPrecio = productPrecios.find((p) => p.almacen_id === alm.id);
                         const existingStock = productStocks.find((s) => s.almacen_id === alm.id);
-                        // Key includes data to force re-render when async data arrives
-                        const rowKey = `${alm.id}-${existingStock?.stock ?? 'x'}-${existingPrecio?.precio_publico ?? 'x'}`;
                         return (
-                          <tr key={rowKey}>
+                          <tr key={`${alm.id}-${dataVersion}`}>
                             <td className="px-3 py-1.5 font-medium text-xs">{alm.nombre}</td>
                             <td className="px-3 py-1.5 text-center">
                               <Input
@@ -449,6 +512,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                                 id={`alm-prov-${alm.id}`}
                               />
                             </td>
+                            {isEditing && (
                             <td className="px-3 py-1.5">
                               <Button
                                 type="button"
@@ -495,6 +559,7 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                                         .eq('id' as never, variant.id as never);
                                     }
                                     void queryClient.invalidateQueries({ queryKey: ['product-almacen-stock'] });
+                                    void queryClient.invalidateQueries({ queryKey: ['product-almacen-precios'] });
                                     void queryClient.invalidateQueries({ queryKey: ['product-stock'] });
                                     logAction('almacen_precio_stock_guardado', {
                                       almacen: alm.nombre,
@@ -516,12 +581,18 @@ export function ProductForm({ open, onOpenChange, productId }: ProductFormProps)
                                 Guardar
                               </Button>
                             </td>
+                            )}
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
+                {!isEditing && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    El stock y precios se guardarán junto con el producto al presionar Crear.
+                  </p>
+                )}
               </div>
             </>
           )}
